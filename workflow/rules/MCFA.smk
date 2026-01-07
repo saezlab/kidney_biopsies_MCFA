@@ -100,7 +100,7 @@ rule combine_scores:
     input:
         expand('results/MCFA/scores~{{hvg}}~{nfactors}.csv', nfactors=config["nfactors_list"])
     output:
-        'results/MCFA/robustness_scores~{dataset}~{hvg}.csv'
+        'results/MCFA/robustness_scores~{hvg}.csv'
     wildcard_constraints:
         hvg = 'all|hvg'
     singularity:
@@ -112,7 +112,7 @@ rule combine_loadings:
     input:
         expand('results/MCFA/loadings~{{hvg}}~{nfactors}.csv', nfactors=config["nfactors_list"])
     output:
-        'results/MCFA/robustness_loadings~{dataset}~{hvg}.csv'
+        'results/MCFA/robustness_loadings~{hvg}.csv'
     wildcard_constraints:
         hvg = 'all|hvg'
     singularity:
@@ -124,7 +124,7 @@ rule combine_r2_by_sample:
     input:
         expand('results/MCFA/r2_by_sample~{{hvg}}~{nfactors}.csv', nfactors=config["nfactors_list"])
     output:
-        'results/MCFA/robustness_r2_by_sample~{dataset}~{hvg}.csv'
+        'results/MCFA/robustness_r2_by_sample~{hvg}.csv'
     wildcard_constraints:
         hvg = 'all|hvg'
     singularity:
@@ -136,10 +136,23 @@ rule combine_r2_total:
     input:
         expand('results/MCFA/r2_total~{{hvg}}~{nfactors}.csv', nfactors=config["nfactors_list"])
     output:
-        'results/MCFA/robustness_r2_total~{dataset}~{hvg}.csv'
+        'results/MCFA/robustness_r2_total~{hvg}.csv'
     wildcard_constraints:
         hvg = 'all|hvg'
     singularity:
         config["singularities"]["scanpy"]
     script:
         '../scripts/MCFA/combine.py'
+
+
+rule factor_robustness:
+    """Compute factor similarity (product of score and loading correlations)."""
+    input:
+        scores='results/MCFA/robustness_scores~all.csv',
+        loadings='results/MCFA/robustness_loadings~all.csv'
+    output:
+        factor_robustness='results/MCFA/factor_robustness.csv'
+    singularity:
+        config["singularities"]["renv"]
+    script:
+        '../scripts/MCFA/factor_robustness.R'
