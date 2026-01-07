@@ -8,7 +8,7 @@ if (exists("snakemake")){
   plt <- snakemake@output$plt
   gg <- snakemake@output$gg
 } else{
-  data <- read.csv('results/data_overview/age~boxplot.csv')
+  data <- read.csv('data/data_overview/age~boxplot.csv')
 }
 
 (

@@ -7,7 +7,7 @@ if (exists("snakemake")){
   plt <- snakemake@output$plot
   gg <- snakemake@output$gg
 } else{
-  data <- read.csv('results/data_overview/modality~heatmap.csv')
+  data <- read.csv('data/data_overview/modality~heatmap.csv')
 }
 
 # Stacked bar plot

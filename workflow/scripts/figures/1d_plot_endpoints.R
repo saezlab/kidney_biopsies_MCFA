@@ -1,7 +1,7 @@
 library(magrittr)
 library(ggplot2)
-endpoints_atlas <- read.csv("results/data_overview/endpoint_atlas~heatmap.csv", row.names = 1)
-proteinuria_over_time <- read.csv("results/data_overview/proteinuria_over_time.csv", row.names = 1)
+endpoints_atlas <- read.csv("data/data_overview/endpoint_atlas~heatmap.csv", row.names = 1)
+proteinuria_over_time <- read.csv("data/data_overview/proteinuria_over_time.csv", row.names = 1)
 
 df <- endpoints_atlas %>%
   dplyr::left_join(proteinuria_over_time) %>%

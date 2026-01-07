@@ -10,7 +10,7 @@ if (exists("snakemake")){
   plt <- snakemake@output$plot
   gg <- snakemake@output$gg
 } else{
-  data <- read.csv('results/data_overview/modality_with_duplicates~heatmap.csv')
+  data <- read.csv('data/data_overview/modality_with_duplicates~heatmap.csv')
 }
 
 ### Version with Xenium information
