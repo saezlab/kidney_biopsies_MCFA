@@ -6,10 +6,10 @@ input: 'data/adata20240621.h5ad'
 metadata: 'data/metadata/patient_metadata_EDA_KPMP.csv'
 
 singularities:
-  scanpy: '/mnt/sds-hd/sd22b002/projects/MichiganIgAN/workflow/envs/scanpy.0.0.5.sif'
+  scanpy: '/mnt/sds-hd/sd22b002/projects/singularities/Robin_sings/scanpy.0.0.5.sif'
   scanpy_update: '/mnt/sds-hd/sd22b002/projects/singularities/Robin_sings/scanpy.0.0.9.sif'
-  mofaxmetacells: '/mnt/sds-hd/sd22b002/projects/MichiganIgAN/workflow/envs/mofaxmetacells.0.0.2.sif'
-  renv: '/mnt/sds-hd/sd22b002/projects/MichiganIgAN/workflow/envs/R_env.sif'
+  mofaxmetacells: '/mnt/sds-hd/sd22b002/projects/singularities/Charlotte_sings/mofaxmetacells.0.0.2.sif'
+  renv: '/mnt/sds-hd/sd22b002/projects/singularities/Robin_sings/R_env.sif'
 
 sample_key: 'Sample'
 condition_key: 'disease'
