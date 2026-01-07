@@ -9,3 +9,5 @@ plots/*
 results/*
 # Snyk Security Extension - AI Rules (auto-generated)
 .github/instructions/snyk_rules.instructions.md
+workflow/scripts/data_overview/clinical_data.R
+workflow/scripts/data_overview/read_proteinuria.R
