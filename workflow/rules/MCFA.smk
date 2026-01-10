@@ -1,6 +1,6 @@
 rule create_mdata: # Done
     input:
-        h5ad_input = config['input']
+        h5ad_input = config['input'],
         coldata_path = config['metadata']
     output:
         h5ad_output = 'results/MCFA/adata.h5ad',
@@ -194,8 +194,6 @@ rule factor_enrichment:
         loadings = 'results/MCFA/loadings~all~5.csv'
     output:
         enrichment_output = 'results/MCFA/hallmark_Factor2.csv'
-    params:
-        gene_sets = config["gene_sets"]
     singularity:
         config["singularities"]["scanpy"]
     script:
