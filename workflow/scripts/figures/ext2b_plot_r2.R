@@ -8,7 +8,7 @@ if (exists("snakemake")){
   plt <- snakemake@output$plt1
   gg <- snakemake@output$gg1
 } else {
-  r2 <- read.csv('results/MCFA/r2_total~adata~LIANA_all~all~5.csv')
+  r2 <- read.csv('results/MCFA/r2_total~all~5.csv')
 }
 
 to_plot <- r2 %>%

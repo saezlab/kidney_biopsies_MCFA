@@ -3,7 +3,7 @@ library(dplyr)
 library(ggplot2)
 library(patchwork)
 data <- read.csv('results/composition/prop~main_class~atlas.csv')
-factors_obs <- read.csv('results/MCFA/factors_obs~adata~LIANA_all~all~5.csv')
+factors_obs <- read.csv('results/MCFA/factors_obs~all~5.csv')
 
 colnames(data) <- stringr::str_replace(colnames(data), "X[:digit:]+_", "")
 df <- data %>%

@@ -3,7 +3,7 @@ library(ggplot2)
 library(ggpubr)
 library(patchwork)
 
-factors_obs <- read.csv('results/MCFA/factors_obs~adata~LIANA_all~all~5.csv', row.names = 1)
+factors_obs <- read.csv('results/MCFA/factors_obs~all~5.csv', row.names = 1)
 
 colnames(factors_obs) <- stringr::str_replace(colnames(factors_obs), "X[:digit:]+_", "")
 

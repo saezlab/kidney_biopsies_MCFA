@@ -9,7 +9,7 @@ if 'snakemake' in locals():
     out_path = snakemake.output['factor2_enrichment']
 else:
     tmm_path = 'data/RelA_KO/post_TMM.txt'
-    loadings_path = 'results/mofaxliana_nogroups/loadings~adata~LIANA_all~all~5.csv'
+    loadings_path = 'results/MCFA/loadings~all~5.csv'
     out_path = 'results/RelA_KO/factor2_enrichment.csv'
 
 # Read TMM

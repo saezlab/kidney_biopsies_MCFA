@@ -4,7 +4,7 @@ library(dplyr)
 library(patchwork)
 library(tidyr)
 
-loadings <- read.csv("results/MCFA/loadings~adata~LIANA_all~all~5.csv",
+loadings <- read.csv("results/MCFA/loadings~all~5.csv",
                      row.names = 1)
 
 loadings_f2 <- loadings %>% dplyr::filter(Factor == "Factor2")
