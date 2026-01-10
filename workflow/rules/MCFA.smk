@@ -199,4 +199,4 @@ rule factor_enrichment:
     singularity:
         config["singularities"]["scanpy"]
     script:
-        '../scripts/downstream/factor_enrichment.py'
+        '../scripts/MCFA/factor_enrichment.py'
