@@ -1,4 +1,3 @@
-# TODO this should be in kidney_biopsies_ArchR
 library(magrittr)
 library(ComplexHeatmap)
 library(circlize)
@@ -6,7 +5,6 @@ library(viridis)
 library(tidyr)
 library(tibble)
 
-setwd("~/GitHub/KuppeBoys2024/")
 disruptedMotifs <- read.csv("data/ATAC/top_disrupted_tfs.csv")
 seEnrich <- readRDS("data/ATAC/enrich_motifs.rds")
 

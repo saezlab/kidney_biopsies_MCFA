@@ -1,8 +1,6 @@
-# TODO: This belongs in kidney_biopsies_ArchR
 library(magrittr)
 library(ComplexHeatmap)
 library(circlize)
-setwd("~/GitHub/KuppeBoys2024/")
 seEnrich <- readRDS("data/ATAC/enrich_motifs.rds")
 
 # Adapt function ArchR::plotEnrichHeatmap() without having to have ArchR installed
@@ -18,7 +16,7 @@ transpose = TRUE
 
 mat <- assays(seEnrich)[["mlog10Padj"]]
 mat_unfiltered <- assays(seEnrich)[["mlog10Padj"]]
-write.csv(mat_unfiltered, "results/ATAC/motif_enrichment_mlog10Padj.csv")
+#write.csv(mat_unfiltered, "results/ATAC/motif_enrichment_mlog10Padj.csv")
 
 # List of TF motifs to plot
 # Top n per cell type
