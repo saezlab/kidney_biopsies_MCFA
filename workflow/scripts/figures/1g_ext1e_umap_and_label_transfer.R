@@ -1,10 +1,8 @@
-# TODO: This belongs in kidney_biopsies_ArchR
-
 library(magrittr)
 library(ggplot2)
 library(dplyr)
-setwd("~/GitHub/KuppeBoys2024/")
-annotations <- read.csv('data/ATAC/label_transfer_RNA_ATAC_V3_clean.csv', row.names = 1) %>%
+
+annotations <- read.csv('data/annotations/label_transfer_RNA_ATAC_V3_clean.csv', row.names = 1) %>%
   tibble::rownames_to_column("cell")
 coordinates <- read.csv('data/ATAC/coordinates.csv', row.names = 1)
 
