@@ -156,3 +156,15 @@ rule factor_robustness:
         config["singularities"]["renv"]
     script:
         '../scripts/MCFA/factor_robustness.R'
+
+rule factors_obs:
+    input:
+        scores_wide = 'results/MCFA/widescores~all~5.csv',
+        metadata_csv = 'data/metadata/patient_metadata_EDA.csv',
+        clr = 'results/composition/clr~main_class.csv'
+    output:
+        factors_obs_csv = 'results/MCFA/factors_obs~all~5.csv'
+    singularity:
+        config["singularities"]["scanpy"]
+    script:
+        '../scripts/MCFA/factors_obs.py'

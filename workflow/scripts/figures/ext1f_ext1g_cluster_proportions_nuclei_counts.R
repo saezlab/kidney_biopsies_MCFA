@@ -1,7 +1,6 @@
 library(ggplot2)
 library(magrittr)
 library(patchwork)
-factors_obs <- read.csv("results/MCFA/factors_obs~adata~LIANA_all~all~5.csv")
 metadata <- read.csv('data/data_overview/patient_metadata_including_xenium_and_duplicate_samples.csv', row.names = 1)
 rna_annotations <- read.csv('data/annotations/biopsydata_withkpmp_final_annotations(in).csv', row.names = 1)
 atac_annotations <- read.csv('data/annotations/label_transfer_RNA_ATAC_V3_clean.csv')
