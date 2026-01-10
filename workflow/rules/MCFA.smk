@@ -200,3 +200,15 @@ rule factor_enrichment:
         config["singularities"]["scanpy"]
     script:
         '../scripts/MCFA/factor_enrichment.py'
+
+rule metadata_associations:
+    input:
+        factors_obs = 'results/MCFA/factors_obs~all~5.csv'
+    output:
+        metadata_pearson_correlations = 'results/MCFA/metadata_pearson_correlations.csv',
+        metadata_anova = 'results/MCFA/metadata_anova.csv',
+        clr_pearson_correlations = 'results/MCFA/clr_pearson_correlations.csv'
+    singularity:
+        config["singularities"]["renv"]
+    script:
+        '../scripts/MCFA/metadata_associations.R'

@@ -4,7 +4,18 @@ library(tidyr)
 library(reshape2)
 library(stats)
 
-df <- read.csv("results/MCFA/factors_obs~adata~LIANA_all~all~5.csv")
+if (exists("snakemake")){
+  factors_obs_path <- snakemake@input$factors_obs
+  metadata_pearson_correlations <- snakemake@output$metadata_pearson_correlations
+  metadata_anova <- snakemake@output$metadata_anova
+  clr_pearson_correlations <- snakemake@output$clr_pearson_correlations
+} else {
+  factors_obs_path <- "results/MCFA/factors_obs~all~5.csv"
+  metadata_pearson_correlations <- "results/MCFA/metadata_pearson_correlations.csv"
+  metadata_anova <- "results/MCFA/metadata_anova.csv"
+  clr_pearson_correlations <- "results/MCFA/clr_pearson_correlations.csv"
+}
+df <- read.csv(factors_obs_path)
 df$disease[stringr::str_detect(df$Sample, "KB")] <- "control_KPMP"
 
 # Make empty strings explicitly NAs, and one-hot encode "disease" (Group) column
@@ -80,6 +91,6 @@ for (factor in factor_columns) {
 anova_results$Adjusted_P_value <- p.adjust(anova_results$P_value, method="fdr")
 anova_results$annotation <- ifelse(anova_results$Adjusted_P_value < 0.05, "∗", "")
 
-write.csv(corr_results, "results/MCFA/metadata_pearson_correlations.csv")
-write.csv(anova_results, "results/MCFA/metadata_anova.csv")
-write.csv(clr_results, "results/MCFA/clr_pearson_correlations.csv")
+write.csv(corr_results, metadata_pearson_correlations)
+write.csv(anova_results, metadata_anova)
+write.csv(clr_results, clr_pearson_correlations)
