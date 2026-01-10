@@ -1,3 +1,4 @@
+# TODO: Update for decoupler 2.0
 # %% Import libraries
 import platform as platform
 import os as os
@@ -9,10 +10,8 @@ if 'snakemake' in locals():
     loadings = snakemake.input['loadings']
     enrichment_output = snakemake.output['enrichment_output']
 else:
-    import os
-    os.chdir('/Users/charlotteboys/GitHub/KuppeBoys2024')
     loadings = 'results/MCFA/loadings~all~5.csv'
-    enrichment_output = 'results/downstream/hallmark_Factor2.csv'
+    enrichment_output = 'results/MCFA/hallmark_Factor2.csv'
 
 # %%
 msigdb = dc.get_resource('MSigDB')
@@ -20,18 +19,6 @@ hallmark = msigdb[msigdb['collection']=='hallmark']
 # Remove duplicated entries
 hallmark = hallmark[~hallmark.duplicated(['geneset', 'genesymbol'])]
 
-# %%
-reactome = msigdb[msigdb['collection']=='reactome_pathways']
-reactome = reactome[~reactome.duplicated(['geneset', 'genesymbol'])]
-
-# %%
-go = msigdb[msigdb['collection']=='go_biological_process']
-go = go[~go.duplicated(['geneset', 'genesymbol'])]
-
-# %%
-msigdb = msigdb[~msigdb.duplicated(['geneset', 'genesymbol'])]
-#%%
-msigdb_selected = msigdb[msigdb['collection'].isin(['hallmark', 'reactome_pathways', 'go_biological_process'])]
 # %%
 loadings_all = pd.read_csv(loadings, index_col=0)
 

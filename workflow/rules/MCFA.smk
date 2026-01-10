@@ -168,3 +168,35 @@ rule factors_obs:
         config["singularities"]["scanpy"]
     script:
         '../scripts/MCFA/factors_obs.py'
+
+rule collectri:
+    input:
+        loadings = 'results/MCFA/loadings~all~5.csv'
+    output:
+        acts = 'results/MCFA/acts_collectri.csv'
+    singularity:
+        config["singularities"]["scanpy_update"]
+    script:
+        '../scripts/MCFA/collectri.py'
+
+rule progeny:
+    input:
+        loadings = 'results/MCFA/loadings~all~5.csv'
+    output:
+        acts = 'results/MCFA/acts_progeny.csv'
+    singularity:
+        config["singularities"]["scanpy_update"]
+    script:
+        '../scripts/MCFA/progeny.py'
+
+rule factor_enrichment:
+    input:
+        loadings = 'results/MCFA/loadings~all~5.csv'
+    output:
+        enrichment_output = 'results/MCFA/hallmark_Factor2.csv'
+    params:
+        gene_sets = config["gene_sets"]
+    singularity:
+        config["singularities"]["scanpy"]
+    script:
+        '../scripts/downstream/factor_enrichment.py'
