@@ -112,6 +112,8 @@ snakemake -n
 # Adapt config/slurm/config.yaml for your cluster, then:
 snakemake --profile config/slurm
 ```
+## Acknowledgements
+The authors acknowledge support by the state of Baden-Württemberg through bwHPC and the German Research Foundation (DFG) through grant INST 35/1597-1 FUGG, as well as the data storage service SDS@hd supported by the Ministry of Science, Research and the Arts Baden-Württemberg (MWK) and the German Research Foundation (DFG) through grant INST 35/1503-1 FUGG. Charlotte Boys gratefully acknowledges DFG funding through the Clinical Research Unit 5011 InteraKD (Project ID: 445703531).
 
 ## License
 
