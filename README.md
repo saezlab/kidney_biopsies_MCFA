@@ -74,11 +74,10 @@ All files listed below as being contained in the `results` folder are produced b
 - Outputs (results and plots) are generated to `results/` and `plots/` (git-ignored).
 - Configuration at `config/config.yaml` controls workflow parameters, container images and paths.
 
-## Requirements
-
-- Snakemake v7.30.2 (this workflow was implemented and tested with this version).
-- Cluster access (Slurm). A `config/slurm/` folder contains example jobscript and utilities for submitting to Slurm, which may need adapting to fulfill job submission requirements of your Slurm system.
-- Singularity images in SIF format (see below).
+## Requirements 
+- This analysis uses Snakemake 9.21.0. To reproduce the analysis, first create an environment with Snakemake v9 using `conda env create -f environment.yml`
+- Cluster access (Slurm). A `config/slurm/` folder contains example jobscript and utilities for submitting to Slurm, which may need adapting to fulfill job submission requirements of your Slurm system. %TODO: update
+- Singularity images in SIF format (see below). %TODO: update
 - Data (see below).
 
 ## Configuration

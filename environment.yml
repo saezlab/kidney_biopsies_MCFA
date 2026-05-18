@@ -1,0 +1,6 @@
+name: kidney-biopsies-mcfa-snakemake9
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - snakemake>=9,<10
