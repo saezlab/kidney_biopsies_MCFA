@@ -8,6 +8,7 @@
 data/*
 plots/*
 results/*
+.apptainer
 # Snyk Security Extension - AI Rules (auto-generated)
 .github/instructions/snyk_rules.instructions.md
 workflow/scripts/data_overview/clinical_data.R

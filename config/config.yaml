@@ -5,6 +5,11 @@ organism: 'human'
 input: 'data/adata20240621.h5ad'
 metadata: 'data/metadata/patient_metadata_EDA_KPMP.csv'
 
+rna_samples: ['K1']
+
+containers:
+  seurat: 'docker://charlotteboys/seurat:1.0.0'
+
 singularities:
   scanpy: '/mnt/sds-hd/sd22b002/projects/singularities/Robin_sings/scanpy.0.0.5.sif'
   scanpy_update: '/mnt/sds-hd/sd22b002/projects/singularities/Robin_sings/scanpy.0.0.9.sif'

@@ -39,3 +39,8 @@ module RelA_KO:
     snakefile: 'rules/RelA_KO.smk'
     config: config
 use rule * from RelA_KO as RelA_*
+
+module seurat:
+    snakefile: "rules/seurat.smk"
+    config: config
+use rule * from seurat as seurat_*

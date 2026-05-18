@@ -16,6 +16,7 @@
 - Do not use the cache/home wrapper variant by default in suggested commands.
 - Only provide the cache/home wrapper variant if the user explicitly asks for it or if plain `snakemake ...` fails in this environment.
 - When touching containerized rules or related config, prefer container references that Snakemake/Apptainer can pull directly from Docker Hub.
+  - Prefer `container:` with values sourced from `config["containers"][...]` for new or touched rules.
   - Do not introduce new machine-specific absolute `.sif` paths as the canonical container source.
 - Keep Snakemake naming simple when reuse is likely:
   - Prefer generic I/O key names like `rds`, `csv`, `plot`, `degs_plot`, `top_markers_plot`, `markers_csv`.
