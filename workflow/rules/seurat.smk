@@ -11,3 +11,15 @@ rule soupx_to_sce:
         config["containers"]["seurat"]
     script:
         "../scripts/seurat/soupx_to_sce.R"
+
+rule qc_plots:
+    input:
+        rds="results/seurat/sce~{sample}.rds"
+    output:
+        plot="plots/seurat/qc~{sample}.pdf"
+    wildcard_constraints:
+        sample="|".join(config["rna_samples"])
+    container:
+        config["containers"]["seurat"]
+    script:
+        "../scripts/seurat/qc_plots.R"
