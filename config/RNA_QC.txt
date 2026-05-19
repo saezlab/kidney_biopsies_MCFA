@@ -1,0 +1,20 @@
+sample	ck_number	status	comment
+K7	CK405	Discarded	CellRanger: Low mapping rate to genome and low median gene coverage.
+K15	CK413	Discarded	CellRanger: low mapping rate to genome and low median gene coverage. High ambient RNA (80%)
+K66	CK422	Discarded	CellRanger: low estimated number of cells.
+K22	CK433	Discarded	CellRanger: low estimated number of cells.
+K13	CK437	Discarded	CellRanger: low estimated number of cells.
+K65	CK441	Discarded	CellRanger: low estimated number of cells.
+K96	CK455	Discarded	CellRanger: low estimated number of cells.
+K8	CK407	Discarded	CellRanger: to chip overload, leading to expected >50% doublets of all cell barcodes. SoupX: High ambient RNA (80%)
+K4	CK401	Discarded	CellRanger: chip overload. SoupX: High ambient RNA (68%)
+K81	CK420	Discarded	SoupX: High ambient RNA (55%)
+K83	CK421	Discarded	QC: Extremely high mitochondrial and ribosome expression
+K80	CK438	Discarded	High ambient RNA (67%). Although it looks good on CR metrics, the number of detected genes vs UMIs is odd.
+K102	CK448	Disregard	Sample belongs to Apollo study (erasmusmc, biopsy NMP)
+K103	CK449	Disregard	Sample belongs to Apollo study (erasmusmc, biopsy NMP)
+K104	CK450	Disregard	Sample belongs to Apollo study (erasmusmc, biopsy NMP)
+K105	CK451	Disregard	Sample belongs to Apollo study (erasmusmc, biopsy NMP)
+K106	CK452	Discarded	Sample belongs to Turgay
+K90	N/A	Disregard	Duplicated entry with no data (empty)
+K91	N/A	Disregard	Duplicated entry with no data (empty)

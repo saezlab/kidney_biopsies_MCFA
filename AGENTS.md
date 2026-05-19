@@ -6,13 +6,15 @@
   - Python scripts should use `if "snakemake" in locals(): ... else: ...`.
   - In the `if` branch, read all `snakemake.input`, `snakemake.output`, and `snakemake.params`.
   - In the `else` branch, keep local defaults for direct script execution.
+  - This workflow assumes Snakemake handles creation of parent directories for declared outputs; do not add manual parent-directory creation in scripts just to satisfy declared outputs.
 - For Python scripts run via Snakemake `script:`, do **not** use `from __future__ import ...`.
   - Snakemake prepends runtime code, so future imports may no longer be the first statement and can fail with `SyntaxError`.
 - When suggesting workflow execution, always provide exact copy-paste Snakemake commands.
 - Prefer explicit targets and include key flags: `--cores` and `--software-deployment-method apptainer`.
 - Command format defaults:
-  - Dry-run: `snakemake --cores 1 <target> --software-deployment-method apptainer -n`
-  - Run: `snakemake --cores 1 <target> --software-deployment-method apptainer`
+  - Dry-run: `snakemake --cores 1 <target> --software-deployment-method apptainer --rerun-triggers mtime -n`
+  - Run: `snakemake --cores 1 <target> --software-deployment-method apptainer --rerun-triggers mtime`
+- Prefer `--rerun-triggers mtime` for workflow execution in this repository.
 - Do not use the cache/home wrapper variant by default in suggested commands.
 - Only provide the cache/home wrapper variant if the user explicitly asks for it or if plain `snakemake ...` fails in this environment.
 - When touching containerized rules or related config, prefer container references that Snakemake/Apptainer can pull directly from Docker Hub.
@@ -32,6 +34,9 @@
   - Inputs: only the files required by that script.
   - Params: only behavioral controls (for example `cluster_column_prefix`, `resolution`, `markers_group`).
   - Outputs: stable generic names that map cleanly to file paths.
+- Keep `config.yaml` focused on genuinely variable settings:
+  - Prefer hard-coded values in rules/scripts for stable analysis constants that are not intended to vary between runs.
+  - Only add config entries for user-facing settings, values reused across workflows, or settings that are genuinely expected to vary across runs/projects.
 - For reproducible Snakemake scheduling in this clean tree, prefer the repo-local workflow profile defined by `profiles/config.yaml`.
 
 Python Snakemake skeleton:

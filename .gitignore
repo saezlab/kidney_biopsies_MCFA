@@ -13,3 +13,4 @@ results/*
 .github/instructions/snyk_rules.instructions.md
 workflow/scripts/data_overview/clinical_data.R
 workflow/scripts/data_overview/read_proteinuria.R
+config/biopsydata_withkpmp_final_annotations(in).csv
