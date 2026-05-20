@@ -80,3 +80,50 @@ rule run_sct_harmony_clustering:
         config["containers"]["seurat"]
     script:
         "../scripts/seurat/run_sct_harmony_clustering.R"
+
+
+rule find_markers:
+    input:
+        rds="results/seurat/sct_harmony.rds"
+    output:
+        csv="results/seurat/markers/findallmarkers_res_{resolution}.csv"
+    params:
+        resolution="{resolution}"
+    wildcard_constraints:
+        resolution=r"\d+\.\d+"
+    container:
+        config["containers"]["seurat"]
+    script:
+        "../scripts/seurat/find_markers.R"
+
+
+rule plot_markers_dotplot:
+    input:
+        rds="results/seurat/sct_harmony.rds",
+        csv="results/seurat/markers/findallmarkers_res_{resolution}.csv"
+    output:
+        plot="plots/seurat/dotplot_res_{resolution}.pdf"
+    params:
+        resolution="{resolution}"
+    wildcard_constraints:
+        resolution=r"\d+\.\d+"
+    container:
+        config["containers"]["seurat"]
+    script:
+        "../scripts/seurat/plot_markers_dotplot.R"
+
+
+rule plot_umap_resolution:
+    input:
+        umap="results/seurat/umap_embeddings.csv",
+        metadata="results/seurat/metadata.csv"
+    output:
+        plot="plots/seurat/umap_res_{resolution}.pdf"
+    params:
+        resolution="{resolution}"
+    wildcard_constraints:
+        resolution=r"\d+\.\d+"
+    container:
+        config["containers"]["seurat"]
+    script:
+        "../scripts/seurat/plot_umap_resolution.R"
