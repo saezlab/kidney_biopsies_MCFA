@@ -7,6 +7,8 @@
   - In the `if` branch, read all `snakemake.input`, `snakemake.output`, and `snakemake.params`.
   - In the `else` branch, keep local defaults for direct script execution.
   - This workflow assumes Snakemake handles creation of parent directories for declared outputs; do not add manual parent-directory creation in scripts just to satisfy declared outputs.
+  - For Seurat/SeuratObject v5 code, do not use `slot=` with `GetAssayData()`; use `layer=` instead (for example `layer = "counts"`).
+  - For merged Seurat v5 assays, `layer=` alone may still fail if the assay contains multiple per-sample layers. Inspect with `Layers(...)` and, when needed, join relevant layers with `JoinLayers(...)` before extracting data with `LayerData(...)`.
 - For Python scripts run via Snakemake `script:`, do **not** use `from __future__ import ...`.
   - Snakemake prepends runtime code, so future imports may no longer be the first statement and can fail with `SyntaxError`.
 - When suggesting workflow execution, always provide exact copy-paste Snakemake commands.
@@ -20,6 +22,7 @@
 - When touching containerized rules or related config, prefer container references that Snakemake/Apptainer can pull directly from Docker Hub.
   - Prefer `container:` with values sourced from `config["containers"][...]` for new or touched rules.
   - Do not introduce new machine-specific absolute `.sif` paths as the canonical container source.
+  - Exception: the rule `run_glue` in `workflow/rules/glue.smk` should prefer `conda:` with `workflow/envs/glue.yaml` instead of containerized execution, because GLUE runs are expected to use GPU and should avoid being coupled to `snakemake` + `singularity/apptainer`.
 - Keep Snakemake naming simple when reuse is likely:
   - Prefer generic I/O key names like `rds`, `csv`, `plot`, `degs_plot`, `top_markers_plot`, `markers_csv`.
   - Avoid branch-specific key names (for example `subset_rds`, `annotation_rds`, `mesimm_degs_plot`) unless the rule/script truly needs multiple variants of the same type.

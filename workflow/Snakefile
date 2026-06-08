@@ -8,6 +8,9 @@ configfile: "config/config.yaml"
 # using Snakemake:
 rule all:
     input:
+        'results/glue/coembedding.csv',
+        'plots/glue/coembedding_umap.pdf',
+        'plots/glue/coembedding_umap_annotations.pdf',
         'results/MCFA/factors_obs~all~5.csv', #2b, 2c, 2e, ext2c
         'results/MCFA/metadata_pearson_correlations.csv', #2d
         'results/MCFA/metadata_anova.csv', #2d
@@ -44,3 +47,8 @@ module seurat:
     snakefile: "rules/seurat.smk"
     config: config
 use rule * from seurat as seurat_*
+
+module glue:
+    snakefile: "rules/glue.smk"
+    config: config
+use rule * from glue as glue_*

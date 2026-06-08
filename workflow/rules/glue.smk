@@ -1,0 +1,57 @@
+rule all_glue:
+    input:
+        "results/glue/coembedding.csv",
+        "plots/glue/coembedding_umap.pdf",
+        "plots/glue/coembedding_umap_annotations.pdf"
+
+
+rule download_gencode:
+    output:
+        gtf="data/reference/gencode.v38.primary_assembly.annotation.gtf.gz"
+    params:
+        url=(
+            "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/"
+            "release_38/gencode.v38.primary_assembly.annotation.gtf.gz"
+        )
+    script:
+        "../scripts/glue/download_gencode.py"
+
+
+#snakemake --cores 1 results/glue/coembedding.csv --software-deployment-method conda --rerun-triggers mtime --resources gpu=1
+rule run_glue:
+    input:
+        mtx="results/seurat/raw_counts.mtx",
+        barcodes="results/seurat/raw_counts_barcodes.tsv.gz",
+        features="results/seurat/raw_counts_features.tsv.gz",
+        variable_features="results/seurat/sct_variable_features.csv",
+        harmony_csv="results/seurat/harmony_embeddings.csv",
+        metadata_csv="results/seurat/metadata.csv",
+        atac_h5ad="data/ATAC/peak_mat2.h5ad",
+        atac_lsi_csv="data/ATAC/harmony_lsi.csv",
+        gtf="data/reference/gencode.v38.primary_assembly.annotation.gtf.gz"
+    output:
+        csv="results/glue/coembedding.csv",
+        model_dir=directory("results/glue/model")
+    params:
+        cuda_device=config["glue"]["cuda_device"]
+    resources:
+        gpu=1
+    conda:
+        "../envs/glue.yaml"
+    script:
+        "../scripts/glue/run_glue.py"
+
+
+rule plot_coembedding:
+    input:
+        csv="results/glue/coembedding.csv",
+        rna_annotations="config/biopsydata_withkpmp_final_annotations(in).csv",
+        atac_h5ad="data/ATAC/peak_mat2.h5ad"
+    output:
+        plot="plots/glue/coembedding_umap.pdf",
+        coords="results/glue/coembedding_umap.csv",
+        annotated_plot="plots/glue/coembedding_umap_annotations.pdf"
+    conda:
+        "../envs/glue.yaml"
+    script:
+        "../scripts/glue/plot_coembedding.py"

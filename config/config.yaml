@@ -1,6 +1,9 @@
 project_name: 'kidney_biopsies_MCFA'
 organism: 'human'
 
+glue:
+  cuda_device: 0
+
 
 input: 'data/adata20240621.h5ad'
 metadata: 'data/metadata/patient_metadata_EDA_KPMP.csv'

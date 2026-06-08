@@ -5,6 +5,9 @@ rule all_seurat:
         "results/seurat/metadata.csv",
         "results/seurat/pca_embeddings.csv",
         "results/seurat/harmony_embeddings.csv",
+        "results/seurat/raw_counts.mtx.gz",
+        "results/seurat/raw_counts_barcodes.csv",
+        "results/seurat/raw_counts_features.csv",
         "results/seurat/umap_pre_harmony_embeddings.csv",
         "results/seurat/umap_embeddings.csv",
         "results/seurat/pca_stdev.csv",
@@ -81,6 +84,19 @@ rule run_sct_harmony_clustering:
     script:
         "../scripts/seurat/run_sct_harmony_clustering.R"
 
+
+rule export_raw_counts:
+    input:
+        rds="results/seurat/sct_harmony.rds"
+    output:
+        mtx="results/seurat/raw_counts.mtx",
+        barcodes="results/seurat/raw_counts_barcodes.tsv.gz",
+        features="results/seurat/raw_counts_features.tsv.gz",
+        variable_features="results/seurat/sct_variable_features.csv"
+    container:
+        config["containers"]["seurat"]
+    script:
+        "../scripts/seurat/export_raw_counts.R"
 
 rule find_markers:
     input:
