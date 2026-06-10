@@ -18,7 +18,7 @@ if (exists("snakemake")) {
   umap_pre_embeddings_csv <- "results/seurat/umap_pre_harmony_embeddings.csv"
   umap_embeddings_csv <- "results/seurat/umap_embeddings.csv"
   pca_sd_csv <- "results/seurat/pca_stdev.csv"
-  clustree_plot <- "plots/seurat/clustree_sct_harmony.pdf"
+  clustree_plot <- "plots/seurat/annotation/clustree_sct_harmony.pdf"
   session_info_csv <- "results/seurat/session_info.csv"
 }
 
@@ -41,6 +41,9 @@ suppressPackageStartupMessages({
 # ‘umi_bin’ (19.22 MiB of class ‘numeric’) and ‘data_step1’ (771.95 KiB of class ‘list’)
 options(future.globals.maxSize = Inf)
 
+log_progress <- function(...) {
+  message(format(Sys.time(), "[%Y-%m-%d %H:%M:%S] "), paste0(..., collapse = ""))
+}
 
 normalize_cluster_columns <- function(meta, resolution_labels) {
   cluster_cols <- grep("^SCT_snn_res\\.", colnames(meta), value = TRUE)
@@ -77,11 +80,16 @@ resolution_labels <- formatC(
   format = "f",
   digits = 1
 )
+
+log_progress("Reading merged Seurat object: ", rds_path)
 obj <- readRDS(rds_path)
+log_progress("Loaded object with ", ncol(obj), " cells and ", nrow(obj), " features.")
 
 if ("SCT" %in% names(obj@assays)) {
+  log_progress("Using existing SCT assay.")
   DefaultAssay(obj) <- "SCT"
 } else {
+  log_progress("Running SCTransform.")
   DefaultAssay(obj) <- "RNA"
   obj <- Seurat::SCTransform(
     object = obj,
@@ -91,8 +99,10 @@ if ("SCT" %in% names(obj@assays)) {
     verbose = FALSE
   )
   DefaultAssay(obj) <- "SCT"
+  log_progress("Finished SCTransform.")
 }
 
+log_progress("Running PCA on SCT assay.")
 obj <- Seurat::RunPCA(
   object = obj,
   assay = "SCT",
@@ -100,7 +110,9 @@ obj <- Seurat::RunPCA(
   verbose = FALSE,
   reduction.name = "pca_sct"
 )
+log_progress("Finished PCA.")
 
+log_progress("Running pre-Harmony UMAP.")
 obj <- Seurat::RunUMAP(
   object = obj,
   reduction = "pca_sct",
@@ -108,7 +120,9 @@ obj <- Seurat::RunUMAP(
   reduction.name = "umap_pre_harmony",
   verbose = FALSE
 )
+log_progress("Finished pre-Harmony UMAP.")
 
+log_progress("Running Harmony.")
 obj <- harmony::RunHarmony(
   object = obj,
   group.by.vars = "sample",
@@ -118,7 +132,9 @@ obj <- harmony::RunHarmony(
   max_iter = 20L,
   early_stop = FALSE
 )
+log_progress("Finished Harmony.")
 
+log_progress("Running Harmony UMAP.")
 obj <- Seurat::RunUMAP(
   object = obj,
   reduction = "harmony",
@@ -126,19 +142,24 @@ obj <- Seurat::RunUMAP(
   reduction.name = "umap",
   verbose = FALSE
 )
+log_progress("Finished Harmony UMAP.")
 
+log_progress("Finding neighbors.")
 obj <- Seurat::FindNeighbors(
   object = obj,
   reduction = "harmony",
   dims = dims_use,
   verbose = FALSE
 )
+log_progress("Finished finding neighbors.")
 
+log_progress("Finding clusters for resolutions ", paste(resolution_labels, collapse = ", "), ".")
 obj <- Seurat::FindClusters(
   object = obj,
   resolution = resolution_grid,
   verbose = FALSE
 )
+log_progress("Finished clustering.")
 
 obj@meta.data <- normalize_cluster_columns(obj@meta.data, resolution_labels)
 
@@ -152,6 +173,7 @@ if (length(missing_cluster_cols) > 0) {
   )
 }
 
+log_progress("Preparing metadata and embedding exports.")
 metadata_out <- obj@meta.data |>
   as.data.frame() |>
   tibble::rownames_to_column(var = "cellid")
@@ -172,19 +194,24 @@ pca_sd_out <- tibble::tibble(
   stdev = as.numeric(obj[["pca_sct"]]@stdev)
 )
 
+log_progress("Writing clustree plot: ", clustree_plot)
 grDevices::pdf(clustree_plot, width = 10, height = 8)
 print(clustree::clustree(obj@meta.data, prefix = "SCT_snn_res."))
 grDevices::dev.off()
 
+log_progress("Writing metadata and embeddings.")
 readr::write_csv(metadata_out, metadata_csv)
 readr::write_csv(pca_out, pca_embeddings_csv)
 readr::write_csv(harmony_out, harmony_embeddings_csv)
 readr::write_csv(umap_pre_out, umap_pre_embeddings_csv)
 readr::write_csv(umap_out, umap_embeddings_csv)
 readr::write_csv(pca_sd_out, pca_sd_csv)
+log_progress("Saving SCT/Harmony Seurat object: ", annotation_rds)
 saveRDS(obj, file = annotation_rds)
+log_progress("Writing session info: ", session_info_csv)
 utils::write.csv(
   utils::capture.output(utils::sessionInfo()),
   file = session_info_csv,
   row.names = FALSE
 )
+log_progress("Done.")

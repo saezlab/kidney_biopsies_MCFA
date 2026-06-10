@@ -17,3 +17,7 @@ config/biopsydata_withkpmp_final_annotations(in).csv
 .cache/*
 .conda/*
 *.pyc
+workflow/scripts/*/exploratory
+workflow/rules/exploratory.smk
+workflow/rules/subclustering.smk
+workflow/scripts/subclustering

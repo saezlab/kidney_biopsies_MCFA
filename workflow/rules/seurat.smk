@@ -1,19 +1,37 @@
 rule all_seurat:
     input:
-        "results/seurat/merged_seurat.rds",
         "results/seurat/sct_harmony.rds",
         "results/seurat/metadata.csv",
         "results/seurat/pca_embeddings.csv",
         "results/seurat/harmony_embeddings.csv",
-        "results/seurat/raw_counts.mtx.gz",
-        "results/seurat/raw_counts_barcodes.csv",
-        "results/seurat/raw_counts_features.csv",
+        "results/seurat/raw_counts.mtx",
+        "results/seurat/raw_counts_barcodes.tsv.gz",
+        "results/seurat/raw_counts_features.tsv.gz",
         "results/seurat/umap_pre_harmony_embeddings.csv",
         "results/seurat/umap_embeddings.csv",
         "results/seurat/pca_stdev.csv",
-        "plots/seurat/clustree_sct_harmony.pdf",
-        "plots/seurat/umap_sct_resolutions.pdf",
-        "results/seurat/session_info.csv"
+        "plots/seurat/annotation/umap_main_class_annotations.pdf",
+        "plots/seurat/annotation/umap_sct_resolutions.pdf",
+        "plots/seurat/annotation/main_class_proportions_by_sct_res_0_2.pdf",
+        "plots/seurat/annotation/qc_metrics_by_sct_res_0_2.pdf",
+        "results/seurat/session_info.csv",
+        expand("results/seurat/subset_{subset}/sct_harmony.rds", subset=config.get("sct_subsets", {}).keys()),
+        expand("plots/seurat/annotation/subset_{subset}/clustree_sct_harmony.pdf", subset=config.get("sct_subsets", {}).keys()),
+        expand("plots/seurat/subset_{subset}/umap_sct_resolutions.pdf", subset=config.get("sct_subsets", {}).keys()),
+        expand("plots/seurat/subset_{subset}/umap_main_class_annotations.pdf", subset=config.get("sct_subsets", {}).keys()),
+        expand("plots/seurat/subset_{subset}/qc_metrics_by_sct_res_0_2.pdf", subset=config.get("sct_subsets", {}).keys()),
+        expand("plots/seurat/subset_{subset}/main_class_proportions_by_sct_res_0_2.pdf", subset=config.get("sct_subsets", {}).keys()),
+
+rule high_quality:
+    input:
+        "plots/seurat/subset_high_quality/umap_sct_resolutions.pdf",
+        "plots/seurat/subset_high_quality/umap_main_class_annotations.pdf",
+        "plots/seurat/subset_high_quality/qc_metrics_by_sct_res_0_6.pdf",
+        "plots/seurat/subset_high_quality/main_class_proportions_by_sct_res_0_6.pdf",
+        "results/seurat/subset_high_quality/markers/findallmarkers_res_0.2.csv",
+        "results/seurat/subset_high_quality/markers/findallmarkers_res_0.4.csv",
+        "results/seurat/subset_high_quality/markers/findallmarkers_res_0.6.csv"
+
 
 rule soupx_to_sce:
     input:
@@ -77,12 +95,96 @@ rule run_sct_harmony_clustering:
         umap_pre_embeddings_csv="results/seurat/umap_pre_harmony_embeddings.csv",
         umap_embeddings_csv="results/seurat/umap_embeddings.csv",
         pca_sd_csv="results/seurat/pca_stdev.csv",
-        clustree_plot="plots/seurat/clustree_sct_harmony.pdf",
-        session_info_csv="results/seurat/session_info.csv",
+        clustree_plot="plots/seurat/annotation/clustree_sct_harmony.pdf",
+        session_info_csv="results/seurat/session_info.csv"
     container:
         config["containers"]["seurat"]
     script:
         "../scripts/seurat/run_sct_harmony_clustering.R"
+
+
+rule run_sct_harmony_clustering_subset:
+    input:
+        merged_seurat_rds="results/seurat/merged_seurat.rds",
+        metadata_csv="results/seurat/metadata.csv"
+    output:
+        rds="results/seurat/subset_{subset}/sct_harmony.rds",
+        metadata_csv="results/seurat/subset_{subset}/metadata.csv",
+        pca_embeddings_csv="results/seurat/subset_{subset}/pca_embeddings.csv",
+        harmony_embeddings_csv="results/seurat/subset_{subset}/harmony_embeddings.csv",
+        umap_pre_embeddings_csv="results/seurat/subset_{subset}/umap_pre_harmony_embeddings.csv",
+        umap_embeddings_csv="results/seurat/subset_{subset}/umap_embeddings.csv",
+        pca_sd_csv="results/seurat/subset_{subset}/pca_stdev.csv",
+        clustree_plot="plots/seurat/annotation/subset_{subset}/clustree_sct_harmony.pdf",
+        session_info_csv="results/seurat/subset_{subset}/session_info.csv"
+    params:
+        subset_resolution=lambda wildcards: config["sct_subsets"][wildcards.subset]["resolution"],
+        subset_clusters=lambda wildcards: config["sct_subsets"][wildcards.subset]["clusters"]
+    wildcard_constraints:
+        subset="|".join(config.get("sct_subsets", {}).keys()) if config.get("sct_subsets", {}) else "(?!)"
+    container:
+        config["containers"]["seurat"]
+    script:
+        "../scripts/seurat/run_sct_harmony_clustering_subset.R"
+
+
+rule plot_subset_umap_sct_resolutions:
+    input:
+        umap="results/seurat/subset_{subset}/umap_embeddings.csv",
+        metadata="results/seurat/subset_{subset}/metadata.csv"
+    output:
+        plot="plots/seurat/subset_{subset}/umap_sct_resolutions.pdf"
+    wildcard_constraints:
+        subset="|".join(config.get("sct_subsets", {}).keys()) if config.get("sct_subsets", {}) else "(?!)"
+    container:
+        config["containers"]["seurat"]
+    script:
+        "../scripts/seurat/plot_umap_sct_resolutions.R"
+
+
+rule plot_subset_umap_main_class_annotations:
+    input:
+        umap="results/seurat/subset_{subset}/umap_embeddings.csv",
+        annotation_csv="config/biopsydata_withkpmp_final_annotations(in).csv"
+    output:
+        plot="plots/seurat/subset_{subset}/umap_main_class_annotations.pdf"
+    wildcard_constraints:
+        subset="|".join(config.get("sct_subsets", {}).keys()) if config.get("sct_subsets", {}) else "(?!)"
+    container:
+        config["containers"]["seurat"]
+    script:
+        "../scripts/seurat/plot_umap_main_class_annotations.R"
+
+
+rule plot_subset_qc_metrics_by_sct_cluster:
+    input:
+        metadata="results/seurat/subset_{subset}/metadata.csv"
+    output:
+        plot="plots/seurat/subset_{subset}/qc_metrics_by_sct_res_0_6.pdf"
+    params:
+        cluster_column="SCT_snn_res.0.6"
+    wildcard_constraints:
+        subset="|".join(config.get("sct_subsets", {}).keys()) if config.get("sct_subsets", {}) else "(?!)"
+    container:
+        config["containers"]["seurat"]
+    script:
+        "../scripts/seurat/plot_qc_metrics_by_sct_cluster.R"
+
+
+rule plot_subset_main_class_proportions_by_sct_cluster:
+    input:
+        metadata="results/seurat/subset_{subset}/metadata.csv",
+        annotation_csv="config/biopsydata_withkpmp_final_annotations(in).csv"
+    output:
+        plot="plots/seurat/subset_{subset}/main_class_proportions_by_sct_res_0_6.pdf"
+    params:
+        cluster_column="SCT_snn_res.0.6"
+    wildcard_constraints:
+        subset="|".join(config.get("sct_subsets", {}).keys()) if config.get("sct_subsets", {}) else "(?!)"
+    container:
+        config["containers"]["seurat"]
+    script:
+        "../scripts/seurat/plot_main_class_proportions_by_sct_cluster.R"
 
 
 rule export_raw_counts:
@@ -106,6 +208,22 @@ rule find_markers:
     params:
         resolution="{resolution}"
     wildcard_constraints:
+        resolution=r"\d+\.\d+"
+    container:
+        config["containers"]["seurat"]
+    script:
+        "../scripts/seurat/find_markers.R"
+
+
+rule find_subset_markers:
+    input:
+        rds="results/seurat/subset_{subset}/sct_harmony.rds"
+    output:
+        csv="results/seurat/subset_{subset}/markers/findallmarkers_res_{resolution}.csv"
+    params:
+        resolution="{resolution}"
+    wildcard_constraints:
+        subset="|".join(config.get("sct_subsets", {}).keys()) if config.get("sct_subsets", {}) else "(?!)",
         resolution=r"\d+\.\d+"
     container:
         config["containers"]["seurat"]
@@ -143,3 +261,61 @@ rule plot_umap_resolution:
         config["containers"]["seurat"]
     script:
         "../scripts/seurat/plot_umap_resolution.R"
+
+rule plot_umap_sct_resolutions:
+    input:
+        umap="results/seurat/umap_embeddings.csv",
+        metadata="results/seurat/metadata.csv"
+    output:
+        plot="plots/seurat/annotation/umap_sct_resolutions.pdf"
+    container:
+        config["containers"]["seurat"]
+    script:
+        "../scripts/seurat/plot_umap_sct_resolutions.R"
+
+rule plot_umap_main_class_annotations:
+    input:
+        umap="results/seurat/umap_embeddings.csv",
+        annotation_csv="config/biopsydata_withkpmp_final_annotations(in).csv"
+    output:
+        plot="plots/seurat/annotation/umap_main_class_annotations.pdf"
+    container:
+        config["containers"]["seurat"]
+    script:
+        "../scripts/seurat/plot_umap_main_class_annotations.R"
+
+rule plot_main_class_proportions_by_sct_cluster:
+    input:
+        metadata="results/seurat/metadata.csv",
+        annotation_csv="config/biopsydata_withkpmp_final_annotations(in).csv"
+    output:
+        plot="plots/seurat/annotation/main_class_proportions_by_sct_res_0_2.pdf"
+    params:
+        cluster_column="SCT_snn_res.0.2"
+    container:
+        config["containers"]["seurat"]
+    script:
+        "../scripts/seurat/plot_main_class_proportions_by_sct_cluster.R"
+
+rule plot_qc_metrics_by_sct_cluster:
+    input:
+        metadata="results/seurat/metadata.csv"
+    output:
+        plot="plots/seurat/annotation/qc_metrics_by_sct_res_0_2.pdf"
+    params:
+        cluster_column="SCT_snn_res.0.2"
+    container:
+        config["containers"]["seurat"]
+    script:
+        "../scripts/seurat/plot_qc_metrics_by_sct_cluster.R"
+
+rule plot_cluster_proportions_by_metadata:
+    input:
+        metadata="results/seurat/metadata.csv",
+        patient_metadata="data/metadata/patient_metadata_EDA.csv"
+    output:
+        plot="plots/seurat/exploratory/cluster_5_8_proportions_by_age_egfr.pdf"
+    container:
+        config["containers"]["seurat"]
+    script:
+        "../scripts/seurat/plot_cluster_proportions_by_metadata.R"
