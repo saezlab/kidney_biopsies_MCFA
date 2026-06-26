@@ -21,3 +21,6 @@ workflow/scripts/*/exploratory
 workflow/rules/exploratory.smk
 workflow/rules/subclustering.smk
 workflow/scripts/subclustering
+Rplots.pdf
+config/archive
+workflow/rules/dPT.smk

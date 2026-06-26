@@ -5,11 +5,11 @@ if (exists("snakemake")) {
   features_path <- snakemake@output[["features"]]
   variable_features_path <- snakemake@output[["variable_features"]]
 } else {
-  rds_path <- "results/seurat/sct_harmony.rds"
-  mtx_path <- "results/seurat/raw_counts.mtx.gz"
-  barcodes_path <- "results/seurat/raw_counts_barcodes.tsv.gz"
-  features_path <- "results/seurat/raw_counts_features.tsv.gz"
-  variable_features_path <- "results/seurat/sct_variable_features.csv"
+  rds_path <- "results/seurat/subset_high_quality/sct_harmony.rds"
+  mtx_path <- "results/seurat/subset_high_quality/raw_counts.mtx"
+  barcodes_path <- "results/seurat/subset_high_quality/raw_counts_barcodes.tsv.gz"
+  features_path <- "results/seurat/subset_high_quality/raw_counts_features.tsv.gz"
+  variable_features_path <- "results/seurat/subset_high_quality/sct_variable_features.csv"
 }
 
 suppressPackageStartupMessages({

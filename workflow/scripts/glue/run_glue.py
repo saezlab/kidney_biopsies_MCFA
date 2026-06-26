@@ -1,10 +1,5 @@
 if "snakemake" in locals():
-    mtx_path = snakemake.input["mtx"]
-    barcodes_path = snakemake.input["barcodes"]
-    features_path = snakemake.input["features"]
-    variable_features_path = snakemake.input["variable_features"]
-    harmony_csv_path = snakemake.input["harmony_csv"]
-    metadata_csv_path = snakemake.input["metadata_csv"]
+    rna_h5ad_path = snakemake.input["rna_h5ad"]
     atac_h5ad_path = snakemake.input["atac_h5ad"]
     atac_lsi_csv_path = snakemake.input["atac_lsi_csv"]
     gtf_path = snakemake.input["gtf"]
@@ -12,12 +7,7 @@ if "snakemake" in locals():
     model_dir = snakemake.output["model_dir"]
     cuda_device = int(snakemake.params["cuda_device"])
 else:
-    mtx_path = "results/seurat/raw_counts.mtx"
-    barcodes_path = "results/seurat/raw_counts_barcodes.tsv.gz"
-    features_path = "results/seurat/raw_counts_features.tsv.gz"
-    variable_features_path = "results/seurat/sct_variable_features.csv"
-    harmony_csv_path = "results/seurat/harmony_embeddings.csv"
-    metadata_csv_path = "results/seurat/metadata.csv"
+    rna_h5ad_path = "results/seurat/subset_high_quality/adata_20260717.h5ad"
     atac_h5ad_path = "data/ATAC/peak_mat2.h5ad"
     atac_lsi_csv_path = "data/ATAC/harmony_lsi.csv"
     gtf_path = "data/reference/gencode.v38.primary_assembly.annotation.gtf.gz"
@@ -54,13 +44,11 @@ def expose_nixos_nvidia_driver():
 
 expose_nixos_nvidia_driver()
 
-import anndata as ad
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import scglue
 import torch
-from scipy import io
 
 
 def require_columns(frame, required, label):
@@ -147,95 +135,29 @@ def check_cuda():
 
 
 def load_rna():
-    counts = io.mmread(mtx_path).tocsr()
-    counts = stochastic_round_sparse_counts(counts)
+    rna = sc.read_h5ad(rna_h5ad_path)
 
-    barcodes = pd.read_csv(barcodes_path, sep="\t", compression="gzip")
-    features = pd.read_csv(features_path, sep="\t", compression="gzip")
-    variable_features = pd.read_csv(variable_features_path)
-    harmony = pd.read_csv(harmony_csv_path)
-    metadata = pd.read_csv(metadata_csv_path)
+    if rna.X is None:
+        raise ValueError("RNA AnnData X is missing the counts matrix.")
+    if "X_harmony" not in rna.obsm:
+        raise ValueError("RNA AnnData is missing obsm['X_harmony'].")
+    require_columns(rna.obs, ["level1", "level2"], "RNA AnnData obs")
+    require_columns(rna.var, ["highly_variable"], "RNA AnnData var")
 
-    require_columns(barcodes, ["cellid"], "RNA barcode table")
-    require_columns(features, ["feature"], "RNA feature table")
-    require_columns(variable_features, ["x"], "SCT variable feature table")
-    require_columns(harmony, ["cellid"], "RNA harmony table")
-    require_columns(metadata, ["cellid"], "RNA metadata table")
+    if rna.obs_names.has_duplicates:
+        raise ValueError("RNA AnnData contains duplicated cell IDs.")
+    if rna.var_names.has_duplicates:
+        raise ValueError("RNA AnnData contains duplicated feature names.")
+    if rna.n_obs == 0 or rna.n_vars == 0:
+        raise ValueError("RNA AnnData is empty.")
+    if int(rna.var["highly_variable"].sum()) == 0:
+        raise ValueError("RNA AnnData has no highly variable genes.")
+    if rna.obsm["X_harmony"].shape[0] != rna.n_obs:
+        raise ValueError(
+            "RNA Harmony embedding row count does not match AnnData observations."
+        )
 
-    barcode_ids = pd.Index(barcodes["cellid"])
-    feature_ids = pd.Index(features["feature"])
-    variable_feature_ids = pd.Index(variable_features["x"].astype(str))
-
-    if counts.shape[0] != len(feature_ids):
-        raise ValueError(
-            "RNA counts matrix row count does not match feature count: "
-            f"{counts.shape[0]} vs {len(feature_ids)}."
-        )
-    if counts.shape[1] != len(barcode_ids):
-        raise ValueError(
-            "RNA counts matrix column count does not match barcode count: "
-            f"{counts.shape[1]} vs {len(barcode_ids)}."
-        )
-    if barcode_ids.has_duplicates:
-        raise ValueError("RNA barcode table contains duplicated cell IDs.")
-    if feature_ids.has_duplicates:
-        raise ValueError("RNA feature table contains duplicated feature names.")
-    if variable_feature_ids.has_duplicates:
-        raise ValueError("SCT variable feature table contains duplicated genes.")
-    if variable_feature_ids.empty:
-        raise ValueError("SCT variable feature table is empty.")
-    missing_variable_features = variable_feature_ids.difference(feature_ids)
-    if len(missing_variable_features) > 0:
-        raise ValueError(
-            "SCT variable features are missing from the RNA count matrix, including "
-            f"{missing_variable_features[:5].tolist()}."
-        )
-    if harmony["cellid"].duplicated().any():
-        raise ValueError("RNA harmony table contains duplicated cell IDs.")
-    if metadata["cellid"].duplicated().any():
-        raise ValueError("RNA metadata table contains duplicated cell IDs.")
-
-    rna = ad.AnnData(
-        X=counts.transpose().tocsr(),
-        obs=pd.DataFrame(index=barcode_ids),
-        var=pd.DataFrame(index=feature_ids),
-    )
-    rna.layers["counts"] = rna.X.copy()
-    rna.var["highly_variable"] = rna.var_names.isin(variable_feature_ids)
-
-    harmony_indexed = harmony.set_index("cellid")
-    missing_harmony = barcode_ids.difference(harmony_indexed.index)
-    extra_harmony = harmony_indexed.index.difference(barcode_ids)
-    if len(missing_harmony) > 0:
-        raise ValueError(
-            "RNA harmony embeddings are missing exported barcodes, including "
-            f"{missing_harmony[:5].tolist()}."
-        )
-    if len(extra_harmony) > 0:
-        raise ValueError(
-            "RNA harmony embeddings contain unexpected barcodes, including "
-            f"{extra_harmony[:5].tolist()}."
-        )
-    harmony_aligned = harmony_indexed.reindex(rna.obs_names)
-    rna.obsm["X_harmony"] = harmony_aligned.to_numpy()
-
-    metadata_indexed = metadata.set_index("cellid")
-    missing_metadata = barcode_ids.difference(metadata_indexed.index)
-    extra_metadata = metadata_indexed.index.difference(barcode_ids)
-    if len(missing_metadata) > 0:
-        raise ValueError(
-            "RNA metadata is missing exported barcodes, including "
-            f"{missing_metadata[:5].tolist()}."
-        )
-    if len(extra_metadata) > 0:
-        raise ValueError(
-            "RNA metadata contains unexpected barcodes, including "
-            f"{extra_metadata[:5].tolist()}."
-        )
-    metadata_aligned = metadata_indexed.reindex(rna.obs_names)
-    if metadata_aligned.isnull().all(axis=1).any():
-        raise ValueError("RNA metadata alignment introduced missing rows.")
-    rna.obs = metadata_aligned
+    rna.X = stochastic_round_sparse_counts(rna.X.tocsr())
 
     return rna
 
@@ -305,12 +227,7 @@ def load_atac():
 
 def main():
     for path, label in (
-        (mtx_path, "RNA matrix"),
-        (barcodes_path, "RNA barcode table"),
-        (features_path, "RNA feature table"),
-        (variable_features_path, "SCT variable feature table"),
-        (harmony_csv_path, "RNA harmony CSV"),
-        (metadata_csv_path, "RNA metadata CSV"),
+        (rna_h5ad_path, "RNA AnnData"),
         (atac_h5ad_path, "ATAC AnnData"),
         (atac_lsi_csv_path, "ATAC harmony LSI CSV"),
         (gtf_path, "GENCODE annotation"),
@@ -334,7 +251,6 @@ def main():
     print("Configuring datasets...")
     scglue.models.configure_dataset(
         rna, "NB",
-        use_layer="counts",
         use_rep="X_harmony"
     )
     scglue.models.configure_dataset(

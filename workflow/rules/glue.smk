@@ -20,12 +20,7 @@ rule download_gencode:
 #snakemake --cores 1 results/glue/coembedding.csv --software-deployment-method conda --rerun-triggers mtime --resources gpu=1
 rule run_glue:
     input:
-        mtx="results/seurat/raw_counts.mtx",
-        barcodes="results/seurat/raw_counts_barcodes.tsv.gz",
-        features="results/seurat/raw_counts_features.tsv.gz",
-        variable_features="results/seurat/sct_variable_features.csv",
-        harmony_csv="results/seurat/harmony_embeddings.csv",
-        metadata_csv="results/seurat/metadata.csv",
+        rna_h5ad="results/seurat/subset_high_quality/adata_20260717.h5ad",
         atac_h5ad="data/ATAC/peak_mat2.h5ad",
         atac_lsi_csv="data/ATAC/harmony_lsi.csv",
         gtf="data/reference/gencode.v38.primary_assembly.annotation.gtf.gz"
