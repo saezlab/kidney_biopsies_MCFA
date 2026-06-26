@@ -48,6 +48,11 @@ module seurat:
     config: config
 use rule * from seurat as seurat_*
 
+module Figure1:
+    snakefile: "rules/Figure1.smk"
+    config: config
+use rule * from Figure1 as Figure1_*
+
 module glue:
     snakefile: "rules/glue.smk"
     config: config

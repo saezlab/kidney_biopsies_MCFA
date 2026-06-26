@@ -4,10 +4,10 @@ if (exists("snakemake")) {
   plot_path <- snakemake@output[["plot"]]
   resolution <- snakemake@params[["resolution"]]
 } else {
-  rds_path <- "results/seurat/sct_harmony.rds"
-  markers_csv <- "results/seurat/markers/findallmarkers_res_0.2.csv"
-  plot_path <- "plots/seurat/dotplot_res_0.2.pdf"
-  resolution <- "0.2"
+  rds_path <- "results/seurat/subset_high_quality/sct_harmony.rds"
+  markers_csv <- "results/seurat/subset_high_quality/markers/findallmarkers_res_0.6.csv"
+  plot_path <- "plots/seurat/subset_high_quality/dotplot_res_0.6.pdf"
+  resolution <- "0.6"
 }
 
 suppressPackageStartupMessages({
@@ -126,6 +126,10 @@ if (nrow(top_markers) == 0L) {
 
 marker_panel <- build_marker_panel_from_markers(top_markers)
 marker_panel <- prepare_marker_panel(marker_panel, rownames(obj))
+
+if (!exists("snakemake")) {
+  dir.create(dirname(plot_path), recursive = TRUE, showWarnings = FALSE)
+}
 
 save_dotplot(
   obj = obj,
