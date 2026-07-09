@@ -262,7 +262,8 @@ def main():
     glue = scglue.models.fit_SCGLUE(
         {"rna": rna, "atac": atac},
         guidance,
-        fit_kws={"directory": model_dir}
+        fit_kws={"directory": model_dir},
+        init_kws={"latent_dim": 30}
     )
     glue.save(os.path.join(model_dir, "glue.dill"))
 

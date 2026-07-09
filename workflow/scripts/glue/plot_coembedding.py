@@ -1,14 +1,18 @@
 if "snakemake" in locals():
     coembedding_path = snakemake.input["csv"]
     rna_annotations_path = snakemake.input["rna_annotations"]
-    atac_h5ad_path = snakemake.input["atac_h5ad"]
+    atac_annotations_path = snakemake.input["atac_annotations"]
+    clusters_path = snakemake.input["clusters"]
+    glue_annotations_path = snakemake.input["glue_annotations"]
     plot_path = snakemake.output["plot"]
     coords_path = snakemake.output["coords"]
     annotated_plot_path = snakemake.output["annotated_plot"]
 else:
     coembedding_path = "results/glue/coembedding.csv"
-    rna_annotations_path = "config/biopsydata_withkpmp_final_annotations(in).csv"
-    atac_h5ad_path = "data/ATAC/peak_mat2.h5ad"
+    rna_annotations_path = "results/seurat/subset_high_quality/metadata_annotations.csv"
+    atac_annotations_path = "data/ATAC/label_transfer_RNA_ATAC_V3_clean.csv"
+    clusters_path = "results/glue/coembedding_clusters.csv"
+    glue_annotations_path = "config/GLUE_annotations.csv"
     plot_path = "plots/glue/coembedding_umap.pdf"
     coords_path = "results/glue/coembedding_umap.csv"
     annotated_plot_path = "plots/glue/coembedding_umap_annotations.pdf"
@@ -36,6 +40,43 @@ DISTINCT_COLORS = [
 UNANNOTATED_COLOR = "#D3D3D3"
 RNA_ANNOTATION_POINT_SIZE = 0.275
 ATAC_ANNOTATION_POINT_SIZE = 0.75
+SHARED_ANNOTATION_POINT_SIZE = 0.2
+GLUE_CLUSTER_COLUMN = "leiden_res_0_7"
+GLUE_ANNOTATION_COLORS = {
+    "PT": "#0072B2",
+    "aPT": "#D55E00",
+    "dPT": "#009E73",
+    "TAL": "#E69F00",
+    "DCT": "#CC79A7",
+    "CNT_PC": "#56B4E9",
+    "IC": "#F0E442",
+    "EC": "#7F3C8D",
+    "Immune": "#11A579",
+    "Stromal": "#3969AC",
+    "POD": "#F2B701",
+    "PEC": "#E73F74",
+}
+ATAC_CLUSTER_ORDER = [
+    "atlas_C1",
+    "atlas_C12",
+    "atlas_C14",
+    "atlas_C3",
+    "atlas_C4",
+    "pc_cnt_dct_C1",
+    "pc_cnt_dct_C2",
+    "pt_C1",
+    "pt_C2",
+    "pt_C3",
+    "pt_C4",
+    "pt_C5",
+    "pt_C6",
+    "pt_C8",
+    "vsm_p_fib_C1",
+    "vsm_p_fib_C2",
+    "vsm_p_fib_C4",
+    "vsm_p_fib_C5",
+]
+ATAC_CLUSTER_COLORS = dict(zip(ATAC_CLUSTER_ORDER, DISTINCT_COLORS))
 
 
 def parse_modality(index):
@@ -56,19 +97,22 @@ def parse_modality(index):
     return modalities, cell_ids
 
 
-def add_rna_annotations(coords):
-    annotations = pd.read_csv(rna_annotations_path)
-    required_columns = {"barcode_combined_id", "main_class"}
-    missing = required_columns.difference(annotations.columns)
+def require_columns(data, columns, label):
+    missing = set(columns).difference(data.columns)
     if missing:
         raise ValueError(
-            "RNA annotation table is missing required columns: "
+            f"{label} is missing required columns: "
             f"{', '.join(sorted(missing))}."
         )
-    if annotations["barcode_combined_id"].duplicated().any():
+
+
+def add_rna_annotations(coords):
+    annotations = pd.read_csv(rna_annotations_path)
+    require_columns(annotations, {"cellid", "level2"}, "RNA annotation table")
+    if annotations["cellid"].duplicated().any():
         raise ValueError("RNA annotation table contains duplicated cell IDs.")
 
-    annotation_map = annotations.set_index("barcode_combined_id")["main_class"]
+    annotation_map = annotations.set_index("cellid")["level2"]
     rna_mask = coords["modality"] == "RNA"
     coords.loc[rna_mask, "rna_annotation"] = (
         coords.loc[rna_mask, "cellid"].map(annotation_map).fillna(UNKNOWN_LABEL)
@@ -80,34 +124,87 @@ def add_rna_annotations(coords):
 
 
 def add_atac_annotations(coords):
-    atac = sc.read_h5ad(atac_h5ad_path, backed="r")
-    if "cluster_label" in atac.obs.columns:
-        label_column = "cluster_label"
-    elif "cluster" in atac.obs.columns:
-        label_column = "cluster"
-        print(
-            "ATAC obs does not contain 'cluster_label'; using existing "
-            "'cluster' column for the ATAC annotation panel."
-        )
-    else:
-        raise ValueError(
-            "ATAC AnnData must contain 'cluster_label' or fallback column 'cluster'."
-        )
-
-    annotation_map = atac.obs[label_column].astype(str)
-    if annotation_map.index.has_duplicates:
+    annotations = pd.read_csv(atac_annotations_path, index_col=0)
+    require_columns(
+        annotations,
+        {"cluster_label", "cluster"},
+        "ATAC annotation table",
+    )
+    if annotations.index.has_duplicates:
         raise ValueError("ATAC annotation table contains duplicated cell IDs.")
+    annotations = annotations.loc[:, ["cluster_label", "cluster"]].astype(str)
 
     atac_mask = coords["modality"] == "ATAC"
-    coords.loc[atac_mask, "atac_annotation"] = (
-        coords.loc[atac_mask, "cellid"].map(annotation_map).fillna(UNKNOWN_LABEL)
+    coords.loc[atac_mask, "atac_cluster_label"] = (
+        coords.loc[atac_mask, "cellid"]
+        .map(annotations["cluster_label"])
+        .fillna(UNKNOWN_LABEL)
+    )
+    coords.loc[atac_mask, "atac_cluster"] = (
+        coords.loc[atac_mask, "cellid"]
+        .map(annotations["cluster"])
+        .fillna(UNKNOWN_LABEL)
     )
     missing_count = int(
-        (coords.loc[atac_mask, "atac_annotation"] == UNKNOWN_LABEL).sum()
+        (coords.loc[atac_mask, "atac_cluster_label"] == UNKNOWN_LABEL).sum()
     )
     if missing_count:
-        print(f"ATAC annotations missing for {missing_count} coembedded ATAC cells.")
-    return coords, label_column
+        print(
+            f"ATAC cluster_label annotations missing for "
+            f"{missing_count} coembedded ATAC cells."
+        )
+    missing_count = int((coords.loc[atac_mask, "atac_cluster"] == UNKNOWN_LABEL).sum())
+    if missing_count:
+        print(
+            f"ATAC cluster annotations missing for "
+            f"{missing_count} coembedded ATAC cells."
+        )
+    return coords
+
+
+def add_glue_annotations(coords):
+    clusters = pd.read_csv(clusters_path)
+    required_columns = {"coembedding_id", GLUE_CLUSTER_COLUMN}
+    missing = required_columns.difference(clusters.columns)
+    if missing:
+        raise ValueError(
+            "Coembedding clusters are missing required columns: "
+            f"{', '.join(sorted(missing))}."
+        )
+    if clusters["coembedding_id"].duplicated().any():
+        raise ValueError("Coembedding clusters contain duplicated coembedding IDs.")
+
+    annotations = pd.read_csv(glue_annotations_path)
+    required_columns = {GLUE_CLUSTER_COLUMN, "annotation"}
+    missing = required_columns.difference(annotations.columns)
+    if missing:
+        raise ValueError(
+            "GLUE annotations are missing required columns: "
+            f"{', '.join(sorted(missing))}."
+        )
+    annotations[GLUE_CLUSTER_COLUMN] = annotations[GLUE_CLUSTER_COLUMN].astype(str)
+    annotations["annotation"] = annotations["annotation"].astype(str)
+    if annotations[GLUE_CLUSTER_COLUMN].duplicated().any():
+        raise ValueError("GLUE annotations contain duplicated Leiden cluster IDs.")
+
+    cluster_map = clusters.set_index("coembedding_id")[GLUE_CLUSTER_COLUMN].astype(str)
+    annotation_map = annotations.set_index(GLUE_CLUSTER_COLUMN)["annotation"]
+    observed_clusters = set(cluster_map.dropna())
+    missing_annotations = sorted(observed_clusters.difference(annotation_map.index))
+    if missing_annotations:
+        raise ValueError(
+            "GLUE annotations are missing Leiden cluster IDs: "
+            f"{', '.join(missing_annotations)}."
+        )
+
+    coords["glue_cluster"] = coords.index.astype(str).map(cluster_map)
+    coords["glue_annotation"] = (
+        coords["glue_cluster"].map(annotation_map).fillna(UNKNOWN_LABEL)
+    )
+    missing_count = int((coords["glue_annotation"] == UNKNOWN_LABEL).sum())
+    if missing_count:
+        print(f"GLUE annotations missing for {missing_count} coembedded cells.")
+    return coords
 
 
 def main_class_sort_key(label):
@@ -140,6 +237,28 @@ def color_map(labels, palette, include_unannotated=False, numeric_prefix_order=F
     return colors
 
 
+def configured_color_map(labels, colors, include_unannotated=False):
+    levels = sorted(pd.Index(labels.dropna().astype(str)).unique())
+    if include_unannotated and UNKNOWN_LABEL in levels:
+        levels = [level for level in levels if level != UNKNOWN_LABEL] + [UNKNOWN_LABEL]
+    missing = [
+        level for level in levels
+        if not (include_unannotated and level == UNKNOWN_LABEL) and level not in colors
+    ]
+    if missing:
+        raise ValueError(
+            f"Missing configured colors for labels: {', '.join(sorted(missing))}."
+        )
+
+    mapped = {}
+    for level in levels:
+        if include_unannotated and level == UNKNOWN_LABEL:
+            mapped[level] = UNANNOTATED_COLOR
+        else:
+            mapped[level] = colors[level]
+    return mapped
+
+
 def scatter_by_label(
     ax,
     data,
@@ -149,13 +268,21 @@ def scatter_by_label(
     point_size,
     include_unannotated=False,
     numeric_prefix_order=False,
+    colors=None,
 ):
-    colors = color_map(
-        data[label_column],
-        palette=palette,
-        include_unannotated=include_unannotated,
-        numeric_prefix_order=numeric_prefix_order,
-    )
+    if colors is None:
+        colors = color_map(
+            data[label_column],
+            palette=palette,
+            include_unannotated=include_unannotated,
+            numeric_prefix_order=numeric_prefix_order,
+        )
+    else:
+        colors = configured_color_map(
+            data[label_column],
+            colors=colors,
+            include_unannotated=include_unannotated,
+        )
     for label in colors:
         group = data.loc[data[label_column].astype(str) == label]
         if group.empty:
@@ -174,6 +301,8 @@ def scatter_by_label(
     ax.set_xlabel("GLUE UMAP 1")
     ax.set_ylabel("GLUE UMAP 2")
     ax.set_aspect("equal", adjustable="datalim")
+    ax.set_xticks([])
+    ax.set_yticks([])
     ax.legend(
         bbox_to_anchor=(1.02, 1),
         loc="upper left",
@@ -213,7 +342,8 @@ def main():
         index=adata.obs_names,
     )
     coords = add_rna_annotations(coords)
-    coords, atac_label_column = add_atac_annotations(coords)
+    coords = add_atac_annotations(coords)
+    coords = add_glue_annotations(coords)
     coords.to_csv(coords_path, index_label="coembedding_id")
 
     colors = {"RNA": "#2F6B4F", "ATAC": "#D8843A"}
@@ -236,30 +366,55 @@ def main():
     ax.set_title("RNA and ATAC GLUE coembedding")
     ax.legend(markerscale=10, frameon=False)
     ax.set_aspect("equal", adjustable="datalim")
+    ax.set_xticks([])
+    ax.set_yticks([])
     fig.savefig(plot_path, dpi=300)
     plt.close(fig)
 
     annotated = coords.loc[
-        coords["rna_annotation"].notna() | coords["atac_annotation"].notna()
+        coords["rna_annotation"].notna()
+        | coords["atac_cluster_label"].notna()
+        | coords["glue_annotation"].notna()
+        | coords["atac_cluster"].notna()
     ].copy()
-    fig, axes = plt.subplots(1, 2, figsize=(15, 6), constrained_layout=True)
+    fig, axes = plt.subplots(2, 2, figsize=(16, 12), constrained_layout=True)
     scatter_by_label(
-        axes[0],
+        axes[0, 0],
         annotated.loc[annotated["modality"] == "RNA"],
         "rna_annotation",
-        "RNA coembedding by main_class",
+        "RNA coembedding by level2",
         palette=PALETTE_21,
         point_size=RNA_ANNOTATION_POINT_SIZE,
         include_unannotated=True,
-        numeric_prefix_order=True,
     )
     scatter_by_label(
-        axes[1],
+        axes[0, 1],
         annotated.loc[annotated["modality"] == "ATAC"],
-        "atac_annotation",
-        f"ATAC coembedding by {atac_label_column}",
+        "atac_cluster_label",
+        "ATAC coembedding by cluster_label",
         palette=DISTINCT_COLORS,
         point_size=ATAC_ANNOTATION_POINT_SIZE,
+        include_unannotated=True,
+    )
+    scatter_by_label(
+        axes[1, 0],
+        annotated,
+        "glue_annotation",
+        "Shared coembedding by GLUE annotation",
+        palette=None,
+        point_size=SHARED_ANNOTATION_POINT_SIZE,
+        include_unannotated=True,
+        colors=GLUE_ANNOTATION_COLORS,
+    )
+    scatter_by_label(
+        axes[1, 1],
+        annotated.loc[annotated["modality"] == "ATAC"],
+        "atac_cluster",
+        "ATAC coembedding by cluster",
+        palette=None,
+        point_size=ATAC_ANNOTATION_POINT_SIZE,
+        include_unannotated=True,
+        colors=ATAC_CLUSTER_COLORS,
     )
     fig.savefig(annotated_plot_path, dpi=300)
     plt.close(fig)

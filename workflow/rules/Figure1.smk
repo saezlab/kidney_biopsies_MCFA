@@ -44,3 +44,13 @@ rule plot_level2_marker_dotplot:
         config["containers"]["seurat"]
     script:
         "../scripts/figures/plot_level2_marker_dotplot.R"
+
+rule plot_glue_coembedding_rna_atac_annotations:
+    input:
+        coords="results/glue/coembedding_umap.csv"
+    output:
+        plot="plots/figures/Figure1/glue_coembedding_rna_atac_annotations.pdf"
+    container:
+        config["containers"]["scanpy"]
+    script:
+        "../scripts/figures/plot_glue_coembedding_rna_atac_annotations.py"
