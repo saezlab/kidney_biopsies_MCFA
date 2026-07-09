@@ -16,7 +16,7 @@ if (exists("snakemake")){
   clr_pearson_correlations <- "results/MCFA/clr_pearson_correlations.csv"
 }
 df <- read.csv(factors_obs_path)
-df$disease[stringr::str_detect(df$Sample, "KB")] <- "control_KPMP"
+#df$disease[stringr::str_detect(df$Sample, "KB")] <- "control_KPMP"
 
 # Make empty strings explicitly NAs, and one-hot encode "disease" (Group) column
 df <- df %>%
@@ -27,8 +27,8 @@ df <- df %>%
 colnames(df) <- stringr::str_remove(colnames(df), "X[:digit:]+_")
 
 # Define which columns are factor scores and which are metadata
-factor_columns <- c("Factor1", "Factor2", "Factor3", "Factor5") # Factor 4 - outlier
-metadata_columns <- c("control", "control_KPMP", "DN", "FSGS", "TIN", "IgAN", "MN",
+factor_columns <- c("Factor1", "Factor2", "Factor3", "Factor4","Factor5") # Factor 4 - outlier
+metadata_columns <- c("control", "control_AKI", "DN", "FSGS", "TIN", "IgAN", "MN",
                       "age_at_biopsy", "sex", "IFTA", "prop_gs",
                       "ace_inhibition", "angiotensin_ii_inhibition",
                       "statin", "corticosteroids",  "dialysis",

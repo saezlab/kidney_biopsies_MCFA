@@ -1,4 +1,6 @@
 # 31.10.2023 Charlotte Boys
+# Updated 26.06.2026 - Charlotte Boys
+
 # %% Import libraries
 import platform as platform
 import os as os
@@ -9,7 +11,7 @@ import muon as mu
 import mofax as mofa
 
 
-# %% Parse snakemake object TODO: update for new repo
+# %% Parse snakemake object
 if 'snakemake' in locals():
     h5mu_input = snakemake.input['h5mu_input']
     model_output = snakemake.output['model_output']
@@ -19,33 +21,39 @@ if 'snakemake' in locals():
     nfactors = snakemake.params['nfactors']
     hvg = snakemake.params['hvg']
     sample_key = snakemake.params['sample_key']
-
 else:
-    h5mu_input = 'results/MCFA/adata_combined.h5mu'
+    h5mu_input = 'results/MCFA/adata.h5mu'
     model_output = 'results/MCFA/model~all~5.h5ad'
     scores_output = 'results/MCFA/scores~all~5.csv'
     scores_wide_output = 'results/MCFA/widescores~all~5.csv'
     loadings_output = 'results/MCFA/loadings~all~5.csv'
     nfactors = 5
     hvg = 'all'
-    sample_key = 'Sample'
+    sample_key = 'sample'
 
 # %% Read mdata
 print('INFO: Loading assay')
 mdata = mu.read_h5mu(h5mu_input)
 
 # %% Set up to run with HVGs
-# First of all, if we're running with LIANA, the hvg selection has already been done or not depending
-# on hvg parameter in rule combine_liana_mdata
-if any("&" in key for key in mdata.mod.keys()):
-    use_var = None
-elif hvg == 'all':
+if hvg == 'all':
     use_var = None
 elif hvg == 'hvg':
-    use_var = 'highly_variable' # I think there's a bug in muon that this doesn't actually make a difference
-    # So we filter to only keep HVGs:
-    for view in mdata.mod.keys():
-        mu.pp.filter_var(mdata.mod[view], var = 'highly_variable')
+    use_var = None
+    # Physically filter to HVGs. Direct AnnData slicing keeps layers aligned
+    # with X/var, unlike mu.pp.filter_var() in this container stack.
+    for view in list(mdata.mod.keys()):
+        adata = mdata.mod[view]
+        if "highly_variable" not in adata.var:
+            raise ValueError(f"Missing highly_variable column for view {view}")
+
+        hvg_mask = adata.var["highly_variable"].astype(bool).to_numpy()
+        if hvg_mask.sum() == 0:
+            raise ValueError(f"No highly variable genes retained for view {view}")
+
+        print(f"INFO: {view} keeping {hvg_mask.sum()}/{adata.n_vars} HVGs")
+        mdata.mod[view] = adata[:, hvg_mask].copy()
+    mdata.update()
     
 # %% Run mofa
 print('INFO: Running MOFA')

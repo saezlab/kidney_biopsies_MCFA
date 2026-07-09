@@ -13,29 +13,19 @@ if 'snakemake' in locals():
     annotation = snakemake.wildcards['annotation']
     subset = snakemake.wildcards['subset']
 else:
-    adata_path = 'kidney_biopsies_MCFA/data/adata20240621.h5ad'
-    annotation ='main_class'# 'subcluster_class' #  
-    subset = 'atlas' # 'FIB_VSMC'
-    clr_csv = 'kidney_biopsies_MCFA/results/composition/clr~' + annotation + '~' + subset + '.csv'
-    prop_csv = 'kidney_biopsies_MCFA/results/composition/prop~' + annotation + '~' + subset + '.csv'
-
-    if platform.system() == 'Linux':
-        adata_path = os.path.join('/mnt/sds-hd/sd22b002/projects', adata_path)
-        clr_csv = os.path.join('/mnt/sds-hd/sd22b002/projects', clr_csv)
-        prop_csv = os.path.join('/mnt/sds-hd/sd22b002/projects', prop_csv)
-
-    elif platform.system() == 'Darwin':
-        adata_path = os.path.join('/Users/charlotteboys/GitHub', adata_path)
-        clr_csv = os.path.join('/Users/charlotteboys/GitHub', clr_csv)
-        prop_csv = os.path.join('/Users/charlotteboys/GitHub', prop_csv)
+    adata_path = 'results/seurat/subset_high_quality/adata_20260717.h5ad'
+    annotation ='level1'  
+    subset = 'atlas' 
+    clr_csv = 'results/composition/clr~' + annotation + '~' + subset + '.csv'
+    prop_csv = 'results/composition/prop~' + annotation + '~' + subset + '.csv'
 
 # %%
 adata = sc.read_h5ad(adata_path)
 
 # %% Subset if necessary
-if subset in adata.obs['main_class'].unique():
+if subset in adata.obs['level1'].unique():
     print("Subsetting Atlas")
-    adata = adata[adata.obs['main_class'] == subset]
+    adata = adata[adata.obs['level1'] == subset]
 else:
     print("No subsetting performed") 
 
@@ -47,8 +37,8 @@ adata.obs[annotation] = adata.obs[annotation].str.replace('/', '_')
 adata.obs[annotation] = adata.obs[annotation].str.replace(' ', '')
 
 # %%
-# Group the DataFrame by 'Sample' and count the occurrences of each 'main_class'
-grouped = adata.obs.groupby('Sample')[annotation].value_counts().unstack(fill_value=0)
+# Group the DataFrame by sample and count the occurrences of each 'level1' annotation within each sample
+grouped = adata.obs.groupby('sample')[annotation].value_counts().unstack(fill_value=0)
 # Remove rows which are all zero (K68)
 grouped = grouped.loc[(grouped != 0).any(axis=1)]
 # Calculate the proportions within each group

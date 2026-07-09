@@ -1,4 +1,5 @@
 # 31.10.2023 - Charlotte Boys
+# Updated 26.06.2026 - Charlotte Boys
 
 # %% Import libraries
 import scanpy as sc
@@ -20,25 +21,24 @@ if 'snakemake' in locals():
     sample_key = snakemake.params['sample_key']
     condition_key = snakemake.params['condition_key']
     groupby = snakemake.params['groupby']
-    drop_views = snakemake.params['drop_views']
     min_cells = snakemake.params['min_cells']
     sample_subset = snakemake.params['sample_subset']
 else:
-    h5ad_input = 'data/adata20240621.h5ad'
-    sample_key = 'Sample'
+    h5ad_input = 'results/seurat/subset_high_quality/adata_20260717.h5ad'
+    sample_key = 'sample'
     condition_key = 'disease'
-    groupby = 'main_class'
-    coldata_path = 'data/metadata/patient_metadata_EDA_KPMP.csv'
-    drop_views = ['15_M-TAL', '11_ATL_DTL', '20_Epi_DTL']
+    groupby = 'level1'
+    coldata_path = 'data/metadata/patient_metadata_EDA.csv'
     min_cells = 25
-    sample_subset = ['K1', 'K100', 'K101', 'K11', 'K12', 'K14', 'K16', 'K17', 'K19',
-       'K2', 'K25', 'K26', 'K29', 'K3', 'K30', 'K31', 'K32', 'K33', 'K34',
-       'K35', 'K36', 'K37', 'K38', 'K40', 'K41', 'K42', 'K43', 'K46',
-       'K48', 'K49', 'K5', 'K50', 'K52', 'K53', 'K54', 'K55', 'K56',
-       'K58', 'K59', 'K6', 'K61', 'K62', 'K67', 'K70', 'K71', 'K73',
-       'K74', 'K75', 'K76', 'K77', 'K78', 'K79', 'K82', 'K84', 'K89',
-       'K92', 'K93', 'K94', 'K97', 'K99', 'KB33', 'KB48', 'KB49', 'KB50',
-       'KB52', 'KB61', 'KB63', 'KB64', 'KB65', 'KB66', 'KB67', 'KB68']
+    sample_subset = ['K1', 'K100', 'K101',
+       'K11', 'K12', 'K14', 'K16', 'K17', 'K19', 'K2',
+       'K25', 'K26', 'K29', 'K3', 'K30', 'K31', 'K32', 'K33', 'K34', 'K35',
+       'K36', 'K37', 'K38', 'K40', 'K41', 'K42', 'K43', 'K46', 'K48',
+       'K49', 'K5', 'K50', 'K52', 'K53', 'K54', 'K55', 'K56', 'K58', 'K59',
+       'K6', 'K61', 'K62', 'K67', 'K68', 'K70', 'K71',
+       'K73', 'K74', 'K75', 'K76', 'K77', 'K78', 'K79',
+       'K82', 'K84', 'K89', 'K92', 'K93', 'K94', 'K95', 'K97',
+       'K98', 'K99']
 # %% Read in AnnData object
 adata = sc.read_h5ad(h5ad_input)
 
@@ -52,20 +52,19 @@ if sample_subset != 'all':
 
 # %% Add coldata to adata.obs
 coldata = pd.read_csv(coldata_path)
-coldata = coldata.rename(columns= {"sample_ID": "Sample"})
+coldata = coldata.rename(columns= {"sample_ID": sample_key})
 coldata_rna = coldata[coldata[sample_key].isin(adata.obs[sample_key])]
 
 # %%
-intersecting_columns = list(set(adata.obs) & set(coldata_rna))
-print("INFO: Intersecting columns between metadata and adata.obs")
-print(intersecting_columns)
+print("INFO: Merging metadata by sample key")
+print(sample_key)
+obs_id_col = "__cellid__"
+obs = adata.obs.copy()
+obs[obs_id_col] = obs.index
+new_obs = obs.merge(coldata_rna, how = "left", on = [sample_key])
 # %%
-if len(intersecting_columns) > 1:
-    new_obs = adata.obs.reset_index().merge(coldata_rna, how = "left", on = intersecting_columns)
-else:
-    new_obs = adata.obs.reset_index().merge(coldata_rna, how = "left", on = [sample_key])
-# %%
-new_obs = new_obs.drop_duplicates(subset='index').set_index('index')
+new_obs = new_obs.drop_duplicates(subset=obs_id_col).set_index(obs_id_col)
+new_obs.index.name = adata.obs.index.name
 # for all columns of type object, convert to string
 object_columns = new_obs.select_dtypes(include=['object']).columns
 new_obs[object_columns] = new_obs[object_columns].astype(str)
@@ -98,23 +97,14 @@ adata.obs['original_labels'] = adata.obs[groupby]
 adata.obs[groupby] = adata.obs[groupby].str.replace('/', '_')
 adata.obs[groupby] = adata.obs[groupby].str.replace(' ', '')
 
-# Remove based on low number of samples covered
-adata = adata[~adata.obs[groupby].isin(drop_views)]
-# Merge cell type groups for better coverage
-adata.obs[groupby][adata.obs[groupby].isin(['4_aPT_aTAL_aDCT', '18_aPT', '16_SPP1+_aPT_PEC'])] = 'aPT_aTAL_aDCT'
-adata.obs[groupby][adata.obs[groupby].isin(['17_PL_B', '19_muscle_mac', '8_Immune'])] = 'Immune'
-adata.obs[groupby][adata.obs[groupby].isin(['9_IC-A', '14_IC-B'])] = 'IC'
-# Remove cluster number to make clear that we aren't using original clusters
-adata.obs[groupby] = adata.obs[groupby].str.replace('^\d+_', '')
-
-#adata.X = np.round(adata.X)
+adata.X = np.round(adata.X)
 adata.layers['counts'] = adata.X
 # %% Create a multi-view structure
 mdata_original = adata_to_views(adata,
                         groupby=groupby,
                         sample_key=sample_key,
                         obs_keys=['disease', 'sex', 'IFTA',
-                                  'corticosteroids', 'group',
+                                  'corticosteroids',
                                   'classification', 'jm_slope', 'immediate_slope'], # add those to mdata.obs
                         min_prop=0.05, # min nnz values (filter features)
                         min_smpls=3, # min samples per view (filter features)

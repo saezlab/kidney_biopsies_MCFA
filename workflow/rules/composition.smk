@@ -7,6 +7,6 @@ rule clr:
     resources:
         mem_mb=50000
     singularity:
-        config["singularities"]["scanpy"]#'workflow/envs/scanpy.0.0.5.sif'
+        config["containers"]["scanpy"]
     script:
         '../scripts/composition/clr.py'

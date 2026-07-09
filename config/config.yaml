@@ -4,9 +4,8 @@ organism: 'human'
 glue:
   cuda_device: 0
 
-
-input: 'data/adata20240621.h5ad'
-metadata: 'data/metadata/patient_metadata_EDA_KPMP.csv'
+input: 'results/seurat/subset_high_quality/adata_20260717.h5ad'
+metadata: 'data/metadata/patient_metadata_EDA.csv'
 
 rna_samples: ['K1', 'K100', 'K101', 'K102', 'K103', 'K104', 'K105', 'K106',
        'K11', 'K12', 'K13', 'K14', 'K15', 'K16', 'K17', 'K19', 'K2', 'K22',
@@ -37,20 +36,11 @@ singularities:
   mofaxmetacells: '/mnt/sds-hd/sd22b002/projects/singularities/Charlotte_sings/mofaxmetacells.0.0.2.sif'
   renv: '/mnt/sds-hd/sd22b002/projects/singularities/Robin_sings/R_env.sif'
 
-sample_key: 'Sample'
+sample_key: 'sample'
 condition_key: 'disease'
 min_cells: 25
-groupby: 'main_class'
-sample_subset: ['K1', 'K100', 'K101', 'K11', 'K12', 'K14', 'K16', 'K17', 'K19',
-       'K2', 'K25', 'K26', 'K29', 'K3', 'K30', 'K31', 'K32', 'K33', 'K34',
-       'K35', 'K36', 'K37', 'K38', 'K40', 'K41', 'K42', 'K43', 'K46',
-       'K48', 'K49', 'K5', 'K50', 'K52', 'K53', 'K54', 'K55', 'K56',
-       'K58', 'K59', 'K6', 'K61', 'K62', 'K67', 'K70', 'K71', 'K73',
-       'K74', 'K75', 'K76', 'K77', 'K78', 'K79', 'K82', 'K84', 'K89',
-       'K92', 'K93', 'K94', 'K97', 'K99', 'KB33', 'KB48', 'KB49', 'KB50',
-       'KB52', 'KB61', 'KB63', 'KB64', 'KB65', 'KB66', 'KB67', 'KB68']
+groupby: 'level1'
 cell_subset: 'all'
-drop_views: ['15_M-TAL', '11_ATL_DTL', '20_Epi_DTL']
 nfactors_list: [3, 4, 5, 10, 15, 20, 25, 30]
 
 sct_subsets:
