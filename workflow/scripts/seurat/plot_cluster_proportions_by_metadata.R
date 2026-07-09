@@ -90,12 +90,44 @@ plot_data_clean <- plot_data %>%
 library(ggplot2)
 library(patchwork)
 
+format_lm_stats <- function(data, x_col) {
+  model_data <- data %>%
+    dplyr::select(clr_proportion, x = all_of(x_col)) %>%
+    tidyr::drop_na()
+
+  if (nrow(model_data) < 3 || dplyr::n_distinct(model_data$x) < 2) {
+    return("R2 = NA\np = NA")
+  }
+
+  fit <- lm(clr_proportion ~ x, data = model_data)
+  fit_summary <- summary(fit)
+  r_squared <- fit_summary$r.squared
+  p_value <- fit_summary$coefficients["x", "Pr(>|t|)"]
+
+  paste0(
+    "R2 = ", formatC(r_squared, format = "f", digits = 3),
+    "\np = ", format.pval(p_value, digits = 3, eps = 0.001)
+  )
+}
+
+cluster_5_data <- plot_data_clean %>%
+  dplyr::filter(cluster == 5)
+
+cluster_8_data <- plot_data_clean %>%
+  dplyr::filter(cluster == 8)
+
 # Cluster 5 vs Age
-p1 <- plot_data_clean %>%
-  dplyr::filter(cluster == 5) %>%
+p1 <- cluster_5_data %>%
   ggplot(aes(x = biopsy_age_years, y = clr_proportion)) +
   geom_point(size = 2, alpha = 0.6) +
-  geom_smooth(method = "loess", color = "blue", fill = "lightblue", alpha = 0.3) +
+  geom_smooth(method = "lm", formula = y ~ x, color = "blue", fill = "lightblue", alpha = 0.3) +
+  annotate(
+    "text",
+    x = Inf, y = Inf,
+    label = format_lm_stats(cluster_5_data, "biopsy_age_years"),
+    hjust = 1.1, vjust = 1.2,
+    size = 3
+  ) +
   labs(
     title = "Cluster 5: CLR-Proportion vs. Biopsy Age",
     x = "Biopsy Age (years from 2021-12-31)",
@@ -105,11 +137,17 @@ p1 <- plot_data_clean %>%
   theme(plot.title = element_text(size = 10, hjust = 0.5))
 
 # Cluster 5 vs eGFR
-p2 <- plot_data_clean %>%
-  dplyr::filter(cluster == 5) %>%
+p2 <- cluster_5_data %>%
   ggplot(aes(x = egfr_at_time_of_biopsy, y = clr_proportion)) +
   geom_point(size = 2, alpha = 0.6) +
-  geom_smooth(method = "loess", color = "blue", fill = "lightblue", alpha = 0.3) +
+  geom_smooth(method = "lm", formula = y ~ x, color = "blue", fill = "lightblue", alpha = 0.3) +
+  annotate(
+    "text",
+    x = Inf, y = Inf,
+    label = format_lm_stats(cluster_5_data, "egfr_at_time_of_biopsy"),
+    hjust = 1.1, vjust = 1.2,
+    size = 3
+  ) +
   labs(
     title = "Cluster 5: CLR-Proportion vs. eGFR",
     x = "eGFR (mL/min/1.73m²)",
@@ -119,11 +157,17 @@ p2 <- plot_data_clean %>%
   theme(plot.title = element_text(size = 10, hjust = 0.5))
 
 # Cluster 8 vs Age
-p3 <- plot_data_clean %>%
-  dplyr::filter(cluster == 8) %>%
+p3 <- cluster_8_data %>%
   ggplot(aes(x = biopsy_age_years, y = clr_proportion)) +
   geom_point(size = 2, alpha = 0.6) +
-  geom_smooth(method = "loess", color = "red", fill = "lightcoral", alpha = 0.3) +
+  geom_smooth(method = "lm", formula = y ~ x, color = "red", fill = "lightcoral", alpha = 0.3) +
+  annotate(
+    "text",
+    x = Inf, y = Inf,
+    label = format_lm_stats(cluster_8_data, "biopsy_age_years"),
+    hjust = 1.1, vjust = 1.2,
+    size = 3
+  ) +
   labs(
     title = "Cluster 8: CLR-Proportion vs. Biopsy Age",
     x = "Biopsy Age (years from 2021-12-31)",
@@ -133,11 +177,17 @@ p3 <- plot_data_clean %>%
   theme(plot.title = element_text(size = 10, hjust = 0.5))
 
 # Cluster 8 vs eGFR
-p4 <- plot_data_clean %>%
-  dplyr::filter(cluster == 8) %>%
+p4 <- cluster_8_data %>%
   ggplot(aes(x = egfr_at_time_of_biopsy, y = clr_proportion)) +
   geom_point(size = 2, alpha = 0.6) +
-  geom_smooth(method = "loess", color = "red", fill = "lightcoral", alpha = 0.3) +
+  geom_smooth(method = "lm", formula = y ~ x, color = "red", fill = "lightcoral", alpha = 0.3) +
+  annotate(
+    "text",
+    x = Inf, y = Inf,
+    label = format_lm_stats(cluster_8_data, "egfr_at_time_of_biopsy"),
+    hjust = 1.1, vjust = 1.2,
+    size = 3
+  ) +
   labs(
     title = "Cluster 8: CLR-Proportion vs. eGFR",
     x = "eGFR (mL/min/1.73m²)",

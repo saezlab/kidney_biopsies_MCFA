@@ -1,44 +1,3 @@
-rule all_seurat:
-    input:
-        "results/seurat/sct_harmony.rds",
-        "results/seurat/metadata.csv",
-        "results/seurat/pca_embeddings.csv",
-        "results/seurat/harmony_embeddings.csv",
-        "results/seurat/raw_counts.mtx",
-        "results/seurat/raw_counts_barcodes.tsv.gz",
-        "results/seurat/raw_counts_features.tsv.gz",
-        "results/seurat/umap_pre_harmony_embeddings.csv",
-        "results/seurat/umap_embeddings.csv",
-        "results/seurat/pca_stdev.csv",
-        "plots/seurat/annotation/umap_main_class_annotations.pdf",
-        "plots/seurat/annotation/umap_sct_resolutions.pdf",
-        "plots/seurat/annotation/main_class_proportions_by_sct_res_0_2.pdf",
-        "plots/seurat/annotation/qc_metrics_by_sct_res_0_2.pdf",
-        "results/seurat/session_info.csv",
-        expand("results/seurat/subset_{subset}/sct_harmony.rds", subset=config.get("sct_subsets", {}).keys()),
-        expand("plots/seurat/annotation/subset_{subset}/clustree_sct_harmony.pdf", subset=config.get("sct_subsets", {}).keys()),
-        expand("plots/seurat/subset_{subset}/umap_sct_resolutions.pdf", subset=config.get("sct_subsets", {}).keys()),
-        expand("plots/seurat/subset_{subset}/umap_main_class_annotations.pdf", subset=config.get("sct_subsets", {}).keys()),
-        expand("plots/seurat/subset_{subset}/qc_metrics_by_sct_res_0_2.pdf", subset=config.get("sct_subsets", {}).keys()),
-        expand("plots/seurat/subset_{subset}/main_class_proportions_by_sct_res_0_2.pdf", subset=config.get("sct_subsets", {}).keys()),
-
-rule high_quality:
-    input:
-        "plots/seurat/subset_high_quality/umap_sct_resolutions.pdf",
-        "plots/seurat/subset_high_quality/umap_main_class_annotations.pdf",
-        "plots/seurat/subset_high_quality/qc_metrics_by_sct_res_0_6.pdf",
-        "plots/seurat/subset_high_quality/qc_metrics_by_sct_res_2_0.pdf",
-        "plots/seurat/subset_high_quality/main_class_proportions_by_sct_res_0_6.pdf",
-        "plots/seurat/subset_high_quality/dotplot_res_0.6.pdf",
-        "results/seurat/subset_high_quality/markers/findallmarkers_res_0.2.csv",
-        "results/seurat/subset_high_quality/markers/findallmarkers_res_0.4.csv",
-        "results/seurat/subset_high_quality/markers/findallmarkers_res_0.6.csv",
-        "results/seurat/subset_high_quality/markers/findallmarkers_res_2.0.csv",
-        "results/seurat/subset_high_quality/markers/findallmarkers_level1.csv",
-        "results/seurat/subset_high_quality/markers/findallmarkers_level2.csv",
-        "results/seurat/subset_high_quality/metadata_annotations.csv"
-
-
 rule soupx_to_sce:
     input:
         matrix="data/RNA/SoupX/{sample}/matrix.mtx.gz",
@@ -351,6 +310,21 @@ rule find_level2_markers:
         config["containers"]["seurat"]
     script:
         "../scripts/seurat/find_celltype_markers.R"
+
+rule find_dpt_markers_excluding_pt_apt:
+    input:
+        rds="results/seurat/subset_high_quality/sct_harmony.rds",
+        metadata="results/seurat/subset_high_quality/metadata_annotations.csv"
+    output:
+        csv="results/seurat/subset_high_quality/markers/findmarkers_level2_dPT_excluding_PT_aPT.csv"
+    params:
+        group_column="level2",
+        target_group="dPT",
+        exclude_groups=["PT", "aPT"]
+    container:
+        config["containers"]["seurat"]
+    script:
+        "../scripts/seurat/find_target_markers_excluding_groups.R"
 
 rule annotate_high_quality_metadata:
     input:
