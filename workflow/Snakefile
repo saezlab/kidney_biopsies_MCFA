@@ -3,30 +3,6 @@ min_version("9.0")
 
 configfile: "config/config.yaml"
 
-# The following output files needed for the scripts contained in
-# workflow/scripts/figures are created within this repository
-# using Snakemake:
-rule all:
-    input:
-        'results/glue/coembedding.csv',
-        'plots/glue/coembedding_umap.pdf',
-        'plots/glue/coembedding_umap_annotations.pdf',
-        'results/MCFA/factors_obs~all~5.csv', #2b, 2c, 2e, ext2c
-        'results/MCFA/metadata_pearson_correlations.csv', #2d
-        'results/MCFA/metadata_anova.csv', #2d
-        'results/MCFA/clr_pearson_correlations.csv', #2d
-        'results/composition/prop~main_class~atlas.csv', #2e
-        'results/MCFA/loadings~all~5.csv', #3a
-        'results/MCFA/acts_collectri.csv', #5a, 5b, 5c, 5i, 5j
-        'results/MCFA/acts_progeny.csv', #5a, 5b, 5c, 5i, 5j
-        'results/MCFA/hallmark_Factor2.csv', #5a, 5b, 5c
-        'results/RelA_KO/factor2_enrichment.csv', #5g
-        'results/RelA_KO/collectri_TFs.csv', #5i, 5j
-        'results/RelA_KO/progeny_pathways.csv', #5i, 5k
-        'results/MCFA/factor_robustness.csv', #ext2a, ext2d
-        'results/MCFA/robustness_r2_by_sample~all.csv', #ext2a, ext2d
-        'results/MCFA/r2_total~all~5.csv', #ext2b
-        'results/composition/clr~main_class~atlas.csv' #ext2e
         
 module composition:
     snakefile: "rules/composition.smk"
@@ -52,6 +28,11 @@ module Figure1:
     snakefile: "rules/Figure1.smk"
     config: config
 use rule * from Figure1 as Figure1_*
+
+module Figure3:
+    snakefile: "rules/Figure3.smk"
+    config: config
+use rule * from Figure3 as Figure3_*
 
 module glue:
     snakefile: "rules/glue.smk"
