@@ -1,7 +1,4 @@
 library(tidyverse)
-library(patchwork)
-library(ComplexHeatmap)
-library(Hmisc)
 
 if (exists("snakemake")){
   scores <- read.csv(snakemake@input$scores)[,-c(1)]
@@ -27,7 +24,7 @@ mat_scores <- pivoted_scores %>%
   dplyr::select(-c(Sample)) %>%
   as.matrix()
 
-corr_scores <- Hmisc::rcorr(mat_scores, type="pearson")$r
+corr_scores <- stats::cor(mat_scores, use = "pairwise.complete.obs", method = "pearson")
 
 #####
 # Correlation between factor loadings
@@ -43,7 +40,7 @@ mat_loadings <- pivoted_loadings %>%
   dplyr::select(-c(view, variable)) %>%
   as.matrix()
 
-corr_loadings <- Hmisc::rcorr(mat_loadings, type="pearson")$r
+corr_loadings <- stats::cor(mat_loadings, use = "pairwise.complete.obs", method = "pearson")
 
 
 ####

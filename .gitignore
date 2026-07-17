@@ -21,6 +21,8 @@ workflow/scripts/*/exploratory
 workflow/rules/exploratory.smk
 workflow/rules/subclustering.smk
 workflow/scripts/subclustering
+workflow/scripts/xeniumpanel
+workflow/rules/xeniumpanel.smk
 Rplots.pdf
 workflow/rules/dPT.smk
 config/archive

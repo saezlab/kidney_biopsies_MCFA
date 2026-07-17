@@ -26,6 +26,10 @@ rna_pass_qc: ['K1', 'K100', 'K101',
        'K82', 'K84', 'K89', 'K92', 'K93', 'K94', 'K95', 'K97',
        'K98', 'K99']
 
+mofa_sensitivity_exclusions:
+  TIN: ['K12', 'K14', 'K16', 'K17', 'K19', 'K25', 'K26']
+  controls: ['K92', 'K93', 'K94', 'K95', 'K97', 'K98', 'K99', 'K100', 'K101']
+
 containers:
   seurat: 'docker://charlotteboys/seurat:1.0.0'
   scanpy: 'docker://falrob/scanpy:0.0.9'

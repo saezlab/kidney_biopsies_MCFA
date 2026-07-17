@@ -17,6 +17,46 @@ rule create_mdata: # Done
         config["containers"]["scanpy"]
     script:
         '../scripts/MCFA/create_mdata.py'
+
+rule run_liana:
+    input:
+        h5ad_input = 'results/MCFA/adata.h5ad'
+    output:
+        h5ad_output = 'results/MCFA/adata_LIANA.h5ad'
+    resources:
+        mem_mb=100000
+    params:
+        sample_key = config["sample_key"],
+        groupby = config["groupby"]
+    container:
+        config["containers"]["scanpy"]
+    script:
+        '../scripts/MCFA/run_liana.py'
+
+rule create_liana_mdata:
+    input:
+        h5ad_input = 'results/MCFA/adata_LIANA.h5ad'
+    output:
+        h5mu_output = 'results/MCFA/adata_LIANA.h5mu'
+    resources:
+        mem_mb=100000
+    params:
+        sample_key = config["sample_key"]
+    container:
+        config["containers"]["scanpy"]
+    script:
+        '../scripts/MCFA/create_liana_mdata.py'
+
+rule combine_liana_mdata:
+    input:
+        h5mu_input = 'results/MCFA/adata.h5mu',
+        h5mu_liana = 'results/MCFA/adata_LIANA.h5mu'
+    output:
+        h5mu_output = 'results/MCFA/adata_liana_hvg.h5mu'
+    container:
+        config["containers"]["scanpy"]
+    script:
+        '../scripts/MCFA/combine_liana_mdata.py'
         
 rule run_mofa: # Done
     input:
@@ -27,7 +67,8 @@ rule run_mofa: # Done
         scores_wide_output = 'results/MCFA/widescores~{hvg}~{nfactors}.csv',
         loadings_output = 'results/MCFA/loadings~{hvg}~{nfactors}.csv'
     wildcard_constraints:
-        hvg = 'all|hvg'
+        hvg = 'all|hvg',
+        nfactors = r'\d+'
     params:
         nfactors = lambda wildcards: wildcards.nfactors,
         hvg = lambda wildcards: wildcards.hvg,
@@ -36,6 +77,44 @@ rule run_mofa: # Done
         config["containers"]["scanpy"]
     script:
         '../scripts/MCFA/run_mofa.py'
+
+rule run_mofa_liana:
+    input:
+        h5mu_input = 'results/MCFA/adata_liana_hvg.h5mu'
+    output:
+        model_output = 'results/MCFA/model~liana_hvg~5.h5ad',
+        scores_output = 'results/MCFA/scores~liana_hvg~5.csv',
+        scores_wide_output = 'results/MCFA/widescores~liana_hvg~5.csv',
+        loadings_output = 'results/MCFA/loadings~liana_hvg~5.csv'
+    params:
+        nfactors = 5,
+        hvg = 'all',
+        sample_key = config["sample_key"]
+    container:
+        config["containers"]["scanpy"]
+    script:
+        '../scripts/MCFA/run_mofa.py'
+
+rule run_mofa_sensitivity:
+    input:
+        h5mu_input = 'results/MCFA/adata.h5mu'
+    output:
+        model_output = 'results/MCFA/model~{hvg}~{nfactors}~exclude-{exclude}.h5ad',
+        scores_output = 'results/MCFA/scores~{hvg}~{nfactors}~exclude-{exclude}.csv',
+        scores_wide_output = 'results/MCFA/widescores~{hvg}~{nfactors}~exclude-{exclude}.csv',
+        loadings_output = 'results/MCFA/loadings~{hvg}~{nfactors}~exclude-{exclude}.csv'
+    wildcard_constraints:
+        hvg = 'all|hvg',
+        nfactors = r'\d+',
+        exclude = '|'.join(config["mofa_sensitivity_exclusions"].keys())
+    params:
+        nfactors = lambda wildcards: wildcards.nfactors,
+        hvg = lambda wildcards: wildcards.hvg,
+        exclude_samples = lambda wildcards: config["mofa_sensitivity_exclusions"][wildcards.exclude]
+    singularity:
+        config["containers"]["scanpy"]
+    script:
+        '../scripts/MCFA/run_mofa_sensitivity.py'
 
 rule calculate_r2: # Done, updated 21.02.24
     input:
@@ -133,6 +212,32 @@ rule factors_obs:
     script:
         '../scripts/MCFA/factors_obs.py'
 
+rule factors_obs_liana:
+    input:
+        scores_wide = 'results/MCFA/widescores~liana_hvg~5.csv',
+        metadata_csv = 'data/metadata/patient_metadata_EDA.csv',
+        clr = 'results/composition/clr~level2~atlas.csv'
+    output:
+        factors_obs_csv = 'results/MCFA/factors_obs~liana_hvg~5.csv'
+    singularity:
+        config["containers"]["scanpy"]
+    script:
+        '../scripts/MCFA/factors_obs.py'
+
+rule factors_obs_sensitivity:
+    input:
+        scores_wide = 'results/MCFA/widescores~hvg~5~exclude-{exclude}.csv',
+        metadata_csv = 'data/metadata/patient_metadata_EDA.csv',
+        clr = 'results/composition/clr~level2~atlas.csv'
+    output:
+        factors_obs_csv = 'results/MCFA/factors_obs~hvg~5~exclude-{exclude}.csv'
+    wildcard_constraints:
+        exclude = '|'.join(config["mofa_sensitivity_exclusions"].keys())
+    singularity:
+        config["containers"]["scanpy"]
+    script:
+        '../scripts/MCFA/factors_obs.py'
+
 rule collectri:
     input:
         loadings = 'results/MCFA/loadings~hvg~5.csv'
@@ -170,6 +275,32 @@ rule metadata_associations:
         metadata_pearson_correlations = 'results/MCFA/metadata_pearson_correlations.csv',
         metadata_anova = 'results/MCFA/metadata_anova.csv',
         clr_pearson_correlations = 'results/MCFA/clr_pearson_correlations.csv'
+    singularity:
+        config["containers"]["seurat"]
+    script:
+        '../scripts/MCFA/metadata_associations.R'
+
+rule metadata_associations_liana:
+    input:
+        factors_obs = 'results/MCFA/factors_obs~liana_hvg~5.csv'
+    output:
+        metadata_pearson_correlations = 'results/MCFA/metadata_pearson_correlations~liana_hvg~5.csv',
+        metadata_anova = 'results/MCFA/metadata_anova~liana_hvg~5.csv',
+        clr_pearson_correlations = 'results/MCFA/clr_pearson_correlations~liana_hvg~5.csv'
+    singularity:
+        config["containers"]["seurat"]
+    script:
+        '../scripts/MCFA/metadata_associations.R'
+
+rule metadata_associations_sensitivity:
+    input:
+        factors_obs = 'results/MCFA/factors_obs~hvg~5~exclude-{exclude}.csv'
+    output:
+        metadata_pearson_correlations = 'results/MCFA/metadata_pearson_correlations~hvg~5~exclude-{exclude}.csv',
+        metadata_anova = 'results/MCFA/metadata_anova~hvg~5~exclude-{exclude}.csv',
+        clr_pearson_correlations = 'results/MCFA/clr_pearson_correlations~hvg~5~exclude-{exclude}.csv'
+    wildcard_constraints:
+        exclude = '|'.join(config["mofa_sensitivity_exclusions"].keys())
     singularity:
         config["containers"]["seurat"]
     script:

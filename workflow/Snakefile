@@ -34,6 +34,11 @@ module Figure3:
     config: config
 use rule * from Figure3 as Figure3_*
 
+module Figure2Ext:
+    snakefile: "rules/Figure2Ext.smk"
+    config: config
+use rule * from Figure2Ext as Figure2Ext_*
+
 module glue:
     snakefile: "rules/glue.smk"
     config: config

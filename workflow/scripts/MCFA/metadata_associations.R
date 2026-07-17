@@ -27,13 +27,18 @@ df <- df %>%
 colnames(df) <- stringr::str_remove(colnames(df), "X[:digit:]+_")
 
 # Define which columns are factor scores and which are metadata
-factor_columns <- c("Factor1", "Factor2", "Factor3", "Factor4","Factor5") # Factor 4 - outlier
+factor_columns <- c("Factor1", "Factor2", "Factor3", "Factor4","Factor5")
 metadata_columns <- c("control", "control_AKI", "DN", "FSGS", "TIN", "IgAN", "MN",
                       "age_at_biopsy", "sex", "IFTA", "prop_gs",
                       "ace_inhibition", "angiotensin_ii_inhibition",
                       "statin", "corticosteroids",  "dialysis",
                       "transplant", "egfr_at_time_of_biopsy", "proteinuria_around_biopsy",
-                      "jm_slope", "classification")# "total_slope", "immediate_slope", "chronic_slope" removed because we don't use these versions
+                      "jm_slope", "classification")
+                      
+if (length(missing_metadata_columns) > 0) {
+  message("Skipping missing metadata columns: ", paste(missing_metadata_columns, collapse = ", "))
+}
+metadata_columns <- intersect(metadata_columns, colnames(df))
 
 # Separate continuous and categorical metadata
 continuous_metadata <- metadata_columns[sapply(df[metadata_columns], is.numeric)]
