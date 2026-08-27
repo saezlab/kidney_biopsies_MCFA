@@ -202,3 +202,18 @@ rule peak_to_gene_links:
         "workflow/envs/celloracle.sif"
     script:
         "../scripts/ATAC/peak_to_gene_links.py"
+
+
+rule pt_factor1_peak_to_gene_motif_links:
+    """Join PT/aPT peak-to-gene links with motif matches and PT Factor1 loadings."""
+    input:
+        peak_to_gene="results/ATAC/circe_peak_to_gene.csv",
+        motif_peak_matches="results/ATAC/motif_peak_matches.csv",
+        loadings="results/MCFA/loadings~hvg~5.csv"
+    output:
+        csv="results/ATAC/pt_factor1_peak_to_gene_motif_links.csv",
+        summary="results/ATAC/pt_factor1_peak_to_gene_motif_links_summary.csv"
+    container:
+        config["containers"]["seurat"]
+    script:
+        "../scripts/ATAC/pt_factor1_peak_to_gene_motif_links.R"
