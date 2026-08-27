@@ -1,4 +1,3 @@
-import os
 import pandas as pd
 import decoupler as dc
 
@@ -6,11 +5,11 @@ import decoupler as dc
 if 'snakemake' in locals():
     tmm_path = snakemake.input['tmm']
     loadings_path = snakemake.input['loadings']
-    out_path = snakemake.output['factor2_enrichment']
+    out_path = snakemake.output['factor1_enrichment']
 else:
     tmm_path = 'data/RelA_KO/post_TMM.txt'
-    loadings_path = 'results/MCFA/loadings~all~5.csv'
-    out_path = 'results/RelA_KO/factor2_enrichment.csv'
+    loadings_path = 'results/MCFA/loadings~hvg~5.csv'
+    out_path = 'results/RelA_KO/factor1_enrichment.csv'
 
 # Read TMM
 tmm = pd.read_csv(tmm_path, sep='\t', index_col=0)
@@ -26,17 +25,17 @@ tmm = tmm[cols]
 tmm = tmm[(tmm != 0).any(axis=1)]
 # %% Z score transform gene expression across all replicates
 tmm_zcore = tmm.subtract(tmm.mean(axis=1), axis=0).divide(tmm.std(axis=1), axis=0)
-# %% Load factor 2 pt loadings
+# %% Load factor PT loadings
 loadings = pd.read_csv(loadings_path, index_col=0)
 # %%
-loadings_f2_PT = loadings[(loadings['Factor'] == "Factor2") & (loadings['view'] == "PT")]
+factor_view_loadings = loadings[(loadings['Factor'] == 'Factor1') & (loadings['view'] == 'PT')]
 # %%
-net = loadings_f2_PT.rename(columns={'Loading':'weight', 'Factor': 'source', 'variable': 'target'})
+net = factor_view_loadings.rename(columns={'Loading':'weight', 'Factor': 'source', 'variable': 'target'})
 mat = tmm_zcore.T
 tf_acts, tf_padj = dc.mt.ulm(data=mat, net=net, tmin=5)
 df = pd.concat(
-    [tf_padj.rename(columns={'Factor2': 'padj'}),
-    tf_acts.rename(columns={'Factor2': 'act'})],
+    [tf_padj.rename(columns={'Factor1': 'padj'}),
+    tf_acts.rename(columns={'Factor1': 'act'})],
     axis=1)
-df.index.rename('gene')
+df = df.rename_axis('sample').reset_index()
 df.to_csv(out_path, index=False)
