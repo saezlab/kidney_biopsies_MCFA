@@ -26,9 +26,9 @@ All files listed below as being contained in the `results` folder are produced b
     - 'results/MCFA/metadata_pearson_correlations.csv'
     - 'results/MCFA/metadata_anova.csv'
     - 'results/MCFA/clr_pearson_correlations.csv'
-- 2e_eGFR_vs_Factor2_vs_aPT_to_PT_ratio.R
+- 2e_eGFR_vs_Factor1_vs_aPT_to_PT_ratio.R
     - 'results/composition/prop~main_class~atlas.csv'
-    - 'results/MCFA/factors_obs~all~5.csv'
+    - 'results/MCFA/factors_obs~hvg~5.csv'
 - 2f_PT_aPT_marker_motifs.R
     - 'data/ATAC/top_disrupted_tfs.csv'
     - 'data/ATAC/enrich_motifs.rds'

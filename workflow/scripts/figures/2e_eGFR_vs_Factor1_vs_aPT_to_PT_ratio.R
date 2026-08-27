@@ -3,7 +3,7 @@ library(dplyr)
 library(ggplot2)
 library(patchwork)
 data <- read.csv('results/composition/prop~main_class~atlas.csv')
-factors_obs <- read.csv('results/MCFA/factors_obs~all~5.csv')
+factors_obs <- read.csv('results/MCFA/factors_obs~hvg~5.csv')
 
 colnames(data) <- stringr::str_replace(colnames(data), "X[:digit:]+_", "")
 df <- data %>%
@@ -13,30 +13,30 @@ df <- data %>%
                    Group = factor(disease,
                                   levels = c("DN", "FSGS", "IgA", "MN", "TIN", "control", "control_KPMP"),
                                   labels = c("DN", "FSGS", "IgAN", "MN", "TIN", "control", "control_KPMP")),
-                   Factor2,
+                   Factor1,
                    `Baseline eGFR` = egfr_at_time_of_biopsy) %>%
-  tidyr::drop_na(Factor2) # Restrict to samples included in model
-  
+  tidyr::drop_na(Factor1) # Restrict to samples included in model
+
 p1 <- df %>%
-  ggplot(aes(y = `Baseline eGFR`, x = `Log ratio aPT to PT`)) + 
+  ggplot(aes(y = `Baseline eGFR`, x = `Log ratio aPT to PT`)) +
   geom_point(aes(color = Group)) + theme_classic() + scale_colour_brewer(palette = "Set2") +
   geom_smooth(method = "lm", se = FALSE, color = "black", alpha = 0.8) +
   ggpubr::stat_cor(method = "pearson", label.y = 160)
 
 
 p2 <- df %>%
-  ggplot(aes(y = `Baseline eGFR`, x = Factor2)) + 
+  ggplot(aes(y = `Baseline eGFR`, x = Factor1)) +
   geom_point(aes(color = Group)) + theme_classic() + scale_colour_brewer(palette = "Set2")  +
   geom_smooth(method = "lm", se = FALSE, color = "black", alpha = 0.8) +
   ggpubr::stat_cor(method = "pearson", label.y = 160)
 
 p3 <- df %>%
-  ggplot(aes(y = `Log ratio aPT to PT`, x = Factor2)) + 
+  ggplot(aes(y = `Log ratio aPT to PT`, x = Factor1)) +
   geom_point(aes(color = Group)) + theme_classic() + scale_colour_brewer(palette = "Set2")  +
   geom_smooth(method = "lm", se = FALSE, color = "black", alpha = 0.8) +
   ggpubr::stat_cor(method = "pearson", label.y = 6)
 
-design <- 
+design <-
 "
 21
 43
