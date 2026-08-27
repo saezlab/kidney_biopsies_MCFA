@@ -159,3 +159,46 @@ rule export_ap1_motif_peak_matches:
         config["containers"]["archr"]
     script:
         "../scripts/ATAC/export_ap1_motif_peak_matches.R"
+
+
+rule prepare_CIRCE_env:
+    """Download the CIRCE Singularity image."""
+    output:
+        sif="workflow/envs/circe.sif"
+    shell:
+        "wget 'https://zenodo.org/records/17661273/files/circe.sif?download=1' -O {output.sif}"
+
+
+rule circe_coaccessibility_network:
+    """Build the CIRCE co-accessibility network for pt_C3/pt_C6 ATAC cells."""
+    input:
+        h5ad="data/ATAC/peak_mat2.h5ad",
+        lsi="data/ATAC/harmony_lsi.csv",
+        circe_sif="workflow/envs/circe.sif"
+    output:
+        coaccessibility="results/ATAC/circe_coaccessibility.csv",
+        peaks="results/ATAC/circe_peaks.csv"
+    params:
+        clusters=["pt_C3", "pt_C6"],
+        min_cells_per_peak=50,
+        min_peaks_per_cell=20
+    threads: 24
+    container:
+        "workflow/envs/circe.sif"
+    script:
+        "../scripts/ATAC/circe_coaccessibility.py"
+
+
+# TODO: Make workflow/envs/celloracle.sif downloadable or replace with docker container
+rule peak_to_gene_links:
+    """Link CIRCE co-accessible peaks with gene TSSs using CellOracle."""
+    input:
+        coaccessibility="results/ATAC/circe_coaccessibility.csv",
+        peaks="results/ATAC/circe_peaks.csv",
+        celloracle_sif="workflow/envs/celloracle.sif"
+    output:
+        peak_to_gene="results/ATAC/circe_peak_to_gene.csv"
+    container:
+        "workflow/envs/celloracle.sif"
+    script:
+        "../scripts/ATAC/peak_to_gene_links.py"
