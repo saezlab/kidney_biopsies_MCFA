@@ -3,7 +3,6 @@ min_version("9.0")
 
 configfile: "config/config.yaml"
 
-        
 module composition:
     snakefile: "rules/composition.smk"
     config: config

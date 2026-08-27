@@ -16,6 +16,8 @@
 - Command format defaults:
   - Dry-run: `snakemake --cores 1 <target> --software-deployment-method apptainer --rerun-triggers mtime -n`
   - Run: `snakemake --cores 1 <target> --software-deployment-method apptainer --rerun-triggers mtime`
+- NEVER run Snakemake with `-F`, `--forceall`, or any equivalent option that forces upstream dependencies.
+- If a single target must be regenerated, `-f` is acceptable, but the scope of the targets to be rerun must be checked by dry-run and approved.
 - Prefer `--rerun-triggers mtime` for workflow execution in this repository.
 - Do not use the cache/home wrapper variant by default in suggested commands.
 - Only provide the cache/home wrapper variant if the user explicitly asks for it or if plain `snakemake ...` fails in this environment.

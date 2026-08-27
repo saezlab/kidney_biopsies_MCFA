@@ -16,6 +16,9 @@ workflow/scripts/data_overview/read_proteinuria.R
 config/biopsydata_withkpmp_final_annotations(in).csv
 .cache/*
 .conda/*
+.config/*
+ArchRLogs
+workflow/envs/*.sif
 *.pyc
 workflow/scripts/*/exploratory
 workflow/rules/exploratory.smk
