@@ -5,33 +5,35 @@ import scanpy as sc
 # %%
 if 'snakemake' in locals():
     loadings = snakemake.input['loadings']
+    prior = snakemake.input['prior']
     acts = snakemake.output['acts']
+    factor_name = snakemake.params['factor']
 else:
-    loadings = 'results/MCFA/loadings~all~5.csv'
+    loadings = 'results/MCFA/loadings~hvg~5.csv'
+    prior = 'data/prior_knowledge/collectri.csv'
     acts = 'results/MCFA/acts_collectri.csv'
+    factor_name = 'Factor1'
 
 # %%
-collectri = dc.op.collectri(organism='human')
-# # %% Save collectri for reference
-# collectri.to_csv('data/PriorKnowledge/collectri.csv')
-# %% Collect Factor 2 loadings
+collectri = pd.read_csv(prior)
+# %% Collect factor loadings
 loadings_all = pd.read_csv(loadings, index_col=0)
 
-loadings_f2 = loadings_all[(loadings_all['Factor'] == "Factor2") &
-                           (~loadings_all['view'].str.contains('&'))]
+factor_loadings = loadings_all[(loadings_all['Factor'] == factor_name) &
+                               (~loadings_all['view'].str.contains('&'))]
 
-celltypes = loadings_f2['view'].unique()
+celltypes = factor_loadings['view'].unique()
 
 # %%
 def enrichment(celltype, net):
-    mat = loadings_f2[loadings_f2['view'] == celltype].set_index('variable').rename(columns={'Loading':'Factor2'})[['Factor2']].T
+    mat = factor_loadings[factor_loadings['view'] == celltype].set_index('variable').rename(columns={'Loading': factor_name})[[factor_name]].T
     tf_acts, tf_padj = dc.mt.ulm(data=mat, net=net, tmin=5)
     df = pd.concat(
-        [tf_padj.T.rename(columns={'Factor2': 'padj'}),
-        tf_acts.T.rename(columns={'Factor2': 'act'})],
+        [tf_padj.T.rename(columns={factor_name: 'padj'}),
+        tf_acts.T.rename(columns={factor_name: 'act'})],
         axis=1)
     df.index.rename('gene')
-    df['Factor'] = 'Factor2'
+    df['Factor'] = factor_name
     df['view'] = celltype
     return df
 

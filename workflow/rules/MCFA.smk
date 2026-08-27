@@ -238,33 +238,53 @@ rule factors_obs_sensitivity:
     script:
         '../scripts/MCFA/factors_obs.py'
 
+rule download_decoupler_prior_knowledge:
+    output:
+        collectri="data/prior_knowledge/collectri.csv",
+        progeny="data/prior_knowledge/progeny.csv",
+        hallmark="data/prior_knowledge/hallmark.csv"
+    container:
+        config["containers"]["decouplerv2"]
+    script:
+        "../scripts/MCFA/download_prior_knowledge.py"
+
+
 rule collectri:
     input:
-        loadings = 'results/MCFA/loadings~hvg~5.csv'
+        loadings = 'results/MCFA/loadings~hvg~5.csv',
+        prior = ancient('data/prior_knowledge/collectri.csv')
     output:
         acts = 'results/MCFA/acts_collectri.csv'
-    singularity:
-        config["containers"]["scanpy"]
+    params:
+        factor = "Factor1"
+    container:
+        config["containers"]["decouplerv2"]
     script:
         '../scripts/MCFA/collectri.py'
 
 rule progeny:
     input:
-        loadings = 'results/MCFA/loadings~hvg~5.csv'
+        loadings = 'results/MCFA/loadings~hvg~5.csv',
+        prior = ancient('data/prior_knowledge/progeny.csv')
     output:
         acts = 'results/MCFA/acts_progeny.csv'
-    singularity:
-        config["containers"]["scanpy"]
+    params:
+        factor = "Factor1"
+    container:
+        config["containers"]["decouplerv2"]
     script:
         '../scripts/MCFA/progeny.py'
 
 rule factor_enrichment:
     input:
-        loadings = 'results/MCFA/loadings~hvg~5.csv'
+        loadings = 'results/MCFA/loadings~hvg~5.csv',
+        prior = ancient('data/prior_knowledge/hallmark.csv')
     output:
-        enrichment_output = 'results/MCFA/hallmark_Factor2.csv'
-    singularity:
-        config["containers"]["scanpy"]
+        enrichment_output = 'results/MCFA/hallmark_Factor1.csv'
+    params:
+        factor = "Factor1"
+    container:
+        config["containers"]["decouplerv2"]
     script:
         '../scripts/MCFA/factor_enrichment.py'
 
