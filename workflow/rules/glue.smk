@@ -45,3 +45,31 @@ rule plot_coembedding:
         config["containers"]["scanpy"]
     script:
         "../scripts/glue/plot_coembedding.py"
+
+
+rule plot_rna_embedding_pt_cluster_overlay:
+    """Plot the GLUE RNA embedding with ATAC pt_C3 and pt_C6 overlays."""
+    input:
+        coords="results/glue/coembedding_umap.csv"
+    output:
+        plot="plots/glue/rna_embedding_pt_C3_pt_C6_overlay.pdf"
+    container:
+        config["containers"]["scanpy"]
+    script:
+        "../scripts/glue/plot_rna_embedding_pt_cluster_overlay.py"
+
+
+rule compute_atac_cluster_rna_knn_composition:
+    """Measure RNA level2 kNN composition around ATAC clusters in 30D GLUE space."""
+    input:
+        coembedding="results/glue/coembedding.csv",
+        annotations="results/glue/coembedding_umap.csv"
+    output:
+        composition="results/glue/atac_cluster_rna_level2_knn_composition.csv",
+        enrichment="results/glue/atac_cluster_rna_level2_knn_enrichment.csv",
+        summary="results/glue/atac_cluster_rna_level2_knn_summary.csv",
+        heatmaps="plots/glue/atac_cluster_rna_level2_knn_heatmaps.pdf"
+    container:
+        config["containers"]["scanpy"]
+    script:
+        "../scripts/glue/compute_atac_cluster_rna_knn_composition.py"
