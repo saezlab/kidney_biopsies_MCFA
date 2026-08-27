@@ -18,6 +18,11 @@ module RelA_KO:
     config: config
 use rule * from RelA_KO as RelA_*
 
+module ATAC:
+    snakefile: "rules/ATAC.smk"
+    config: config
+use rule * from ATAC as ATAC_*
+
 module seurat:
     snakefile: "rules/seurat.smk"
     config: config
