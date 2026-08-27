@@ -79,3 +79,83 @@ rule plot_atac_marker_ulm_cluster_heatmap:
         config["containers"]["scanpy"]
     script:
         "../scripts/ATAC/plot_marker_ulm_cluster_heatmap.py"
+
+
+rule PT_aPT_differential_accessibility:
+    """Compare pt_C6 (aPT) against pt_C3 (PT) differential accessibility."""
+    input:
+        project_path="data/ATAC/proj_peaks2"
+    output:
+        marker_peaks="results/ATAC/PT_aPT_differential_accessibility_marker_peaks.rds",
+        apt_open_enrich_motifs="results/ATAC/aPT_open_motif_enrichment.rds",
+        pt_open_enrich_motifs="results/ATAC/PT_open_motif_enrichment.rds"
+    params:
+        group_by="cluster",
+        use_group="pt_C6",
+        background_group="pt_C3"
+    threads: 24
+    container:
+        config["containers"]["archr"]
+    script:
+        "../scripts/ATAC/PT_aPT_differential_accessibility.R"
+
+
+rule motif_peak_matches:
+    """Map enriched motifs to direction-matched PT/aPT differentially accessible peaks."""
+    input:
+        project_path="data/ATAC/proj_peaks2",
+        marker_peaks="results/ATAC/PT_aPT_differential_accessibility_marker_peaks.rds",
+        apt_open_enrich_motifs="results/ATAC/aPT_open_motif_enrichment.rds",
+        pt_open_enrich_motifs="results/ATAC/PT_open_motif_enrichment.rds"
+    output:
+        rds="results/ATAC/motif_peak_matches.rds",
+        csv="results/ATAC/motif_peak_matches.csv"
+    threads: 1
+    container:
+        config["containers"]["archr"]
+    script:
+        "../scripts/ATAC/motif_peak_matches.R"
+
+
+rule export_PT_aPT_differential_accessibility_marker_peaks:
+    """Export PT/aPT differential accessibility statistics with peak coordinates."""
+    input:
+        project_path="data/ATAC/proj_peaks2",
+        marker_peaks="results/ATAC/PT_aPT_differential_accessibility_marker_peaks.rds"
+    output:
+        csv="results/ATAC/PT_aPT_differential_accessibility_marker_peaks.csv"
+    threads: 1
+    container:
+        config["containers"]["archr"]
+    script:
+        "../scripts/ATAC/export_pt_apt_differential_accessibility_marker_peaks.R"
+
+
+rule export_rela_motif_peak_matches:
+    """Export ArchR peaks with RELA motif matches."""
+    input:
+        project_path="data/ATAC/proj_peaks2"
+    output:
+        csv="results/ATAC/rela_motif_peak_matches.csv"
+    params:
+        motif_prefix="RELA"
+    threads: 1
+    container:
+        config["containers"]["archr"]
+    script:
+        "../scripts/ATAC/export_rela_motif_peak_matches.R"
+
+
+rule export_ap1_motif_peak_matches:
+    """Export ArchR peaks with AP-1 family motif matches."""
+    input:
+        project_path="data/ATAC/proj_peaks2"
+    output:
+        csv="results/ATAC/ap1_motif_peak_matches.csv"
+    params:
+        motif_prefixes=["JUN", "JUNB", "JUND", "FOS", "FOSB", "FOSL1", "FOSL2", "BATF"]
+    threads: 1
+    container:
+        config["containers"]["archr"]
+    script:
+        "../scripts/ATAC/export_ap1_motif_peak_matches.R"

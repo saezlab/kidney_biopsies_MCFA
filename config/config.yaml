@@ -34,6 +34,7 @@ containers:
   seurat: 'docker://charlotteboys/seurat:1.0.0'
   scanpy: 'docker://falrob/scanpy:0.0.9'
   decouplerv2: 'docker://falrob/scanpy:0.1.2'
+  archr: 'docker://charlotteboys/archr_1.0.3-base-r4.1:0.0.1'
 
 singularities:
   scanpy: '/mnt/sds-hd/sd22b002/projects/singularities/Robin_sings/scanpy.0.0.5.sif'
