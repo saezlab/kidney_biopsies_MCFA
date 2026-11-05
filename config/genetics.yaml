@@ -1,0 +1,35 @@
+# (C) Sergio Alejandro Gómez
+# Configuration of the genetics analyses (workflow/rules/genetics.smk). Paths are relative to the repository root.
+# The input files are public or come with the study data; workflow/scripts/genetics/README.md lists where each one comes from.
+genetics:
+  results: results/genetics
+
+  # both pt_C5 versions are produced; drop one here to run only the other
+  versions: [with_ptC5, without_ptC5]
+
+  inputs:
+    # ArchR PeakMatrix of the study (all 43 libraries, 447,919 peaks)
+    h5ad: data/atac/peak_mat2.h5ad
+    # cluster -> population (10 populations) and cluster -> 13 labels
+    population_labels: resources/genetics/atac_population_labels.csv
+    labels_13: resources/genetics/atac_13_labels.csv
+
+    # eGFR fine-mapping (CARMA, Liu et al. 2025, Table S7)
+    egfr_carma: data/genetics/finemapping_carma.csv
+    chain_hg19_to_hg38: data/genetics/hg19ToHg38.over.chain
+
+    # kidney QTL and gene resources
+    open4gene: data/genetics/Open4Gene_62K_Cells_Peak_to_Gene_Significant_Associations.txt.gz
+    gtex_pairs_parquet: data/genetics/Kidney_Cortex.v10.eQTLs.signif_pairs.parquet
+    gtex_egenes: data/genetics/Kidney_Cortex.v10.eGenes.txt.gz
+    basa_caqtl: data/genetics/bASA_RASQUAL_82_Kidney_Significant_Associations.txt.gz
+    ensembl_gtf: data/genetics/Homo_sapiens.GRCh38.108.gtf
+
+    # CKD GWAS (CKDGen, Wuttke et al. 2019) and the 1000 Genomes EUR LD reference (PLINK prefix)
+    ckd_gwas: data/genetics/CKD_overall_EA_JW_20180223_nstud23.dbgap.txt
+    ld_panel: data/genetics/g1000_eur
+
+  # analysis parameters (the values used for the published results)
+  gchromvar_seeds: "2024,1,2,3,4,5"      # 2024 gives the reported result; seeds 1-5 show the spread from background peaks
+  motifbreakr_workers: 6                 # also sets the chunking of the candidates (workers x 4); keep 6 to reproduce row order
+  ckd_finemapping_threads: 4

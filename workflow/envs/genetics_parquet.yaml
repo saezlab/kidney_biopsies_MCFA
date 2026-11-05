@@ -1,0 +1,12 @@
+# (C) Sergio Alejandro Gómez
+# Small Python environment for one step only: converting the GTEx v10 kidney-cortex significant pairs from parquet to a gzip
+# TSV (00_gtex_parquet_to_tsv.py), because R here has no parquet reader. The versions are those used for the published
+# QTL resources; the conversion writes every float with 17 significant digits, so it is lossless.
+name: genetics_parquet
+channels:
+  - conda-forge
+dependencies:
+  - python=3.14
+  - pyarrow=24.0.0
+  - pandas=3.0.1
+  - numpy=2.4.2
